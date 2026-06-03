@@ -34,7 +34,9 @@ add_defines("ENABLE_COMMONLIBSSE_TESTING=1")
 
 -- 2. ОПРЕДЕЛЯЕМ КАСТОМНЫЙ ПАКЕТ
 package("commonlibsse-ng")
-    add_urls("https://github.com/alandtse/CommonLibVR.git", { branch = "ng" })
+           -- https://github.com/alandtse/CommonLibVR/archive/refs/tags/v4.21.1.zip
+    add_urls("https://github.com/alandtse/CommonLibVR.git")
+    add_versions("v4.21.1", "6ba6e159805f7e9ebbd7b232e7ef5c1b86db3d23")
 
     add_deps("directxmath 2024.02", "directxtk 24.2.0")
     add_deps("spdlog v1.16.0", { configs = { header_only = false, wchar = true, std_format = true } })
@@ -53,7 +55,7 @@ package("commonlibsse-ng")
 package_end()
 
 -- 3. ТРЕБУЕМ НАШ ПАКЕТ
-add_requires("commonlibsse-ng")
+add_requires("commonlibsse-ng v4.21.1")
 add_requires("minhook")
 
 -- 4. НАША ЦЕЛЬ (C++ Мост для Rust)

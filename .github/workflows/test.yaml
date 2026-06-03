@@ -1,0 +1,68 @@
+name: Test(Cargo)
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["*"]
+  workflow_dispatch:
+
+# Only the latest push job is executed when successive pushes are performed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+    runs-on: ${{ matrix.job.os }}
+
+    steps:
+      - uses: actions/checkout@v6.0.3
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-deps
+        with:
+          platform: ${{ matrix.job.target }}
+          build_profile: debug
+          cache_key_suffix: test
+
+      # https://nexte.st/docs/installation/pre-built-binaries/#using-nextest-in-github-actions
+      - name: Install nextest(Parallel Test Execution CLI)
+        uses: taiki-e/install-action@nextest
+      - name: Test
+        run: cargo nextest run --workspace --target ${{ matrix.job.target }}
+
+  # miri:
+  #   strategy:
+  #     matrix:
+  #       job:
+  #         - { target: x86_64-pc-windows-msvc, os: windows-latest }
+  #   runs-on: ${{ matrix.job.os }}
+
+  #   steps:
+  #     - uses: actions/checkout@v6.0.3
+
+  #     - name: Setup environment
+  #       uses: ./.github/actions/setup-deps
+  #       with:
+  #         platform: ${{ matrix.job.target }}
+  #         build_profile: debug
+  #         cache_key_suffix: miri
+
+  #     - name: Install Miri
+  #       run: |
+  #         rustup toolchain install nightly --component miri
+  #         rustup override set nightly
+  #         cargo miri setup
+  #     - name: Search undefined behavior
+  #       run: cargo miri test --workspace
