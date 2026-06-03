@@ -1,5 +1,4 @@
-#include "PCH.h"
-
+#include "SKSE/Logger.h"
 #include "bridge_test_support.h"
 
 #include "RE/B/BSFixedString.h"
@@ -15,6 +14,10 @@
 #include <cstring>
 #include <memory>
 #include <new>
+#include <cstdint>
+
+namespace logger = SKSE::log;
+namespace stl = SKSE::stl;
 
 namespace
 {
@@ -296,7 +299,7 @@ namespace
             }
         }
 
-        bool operator()(RE::BSScrapArray<RE::BSScript::Variable>& a_dst) const override
+        bool operator()(RE::BSScrapArray<RE::BSScript::Variable>& a_dst) const
         {
             if (!collect) {
                 return false;
@@ -375,7 +378,6 @@ namespace
 }
 
 extern "C" {
-    // 1. Инициализация CommonLib
     void init_commonlib(const void* skse_interface) {
         SKSE::Init((const SKSE::LoadInterface*)skse_interface);
     }
@@ -384,7 +386,6 @@ extern "C" {
         SKSE::Init((const SKSE::LoadInterface*)skse_interface, log);
     }
 
-    // 2. Получение адресов
     uintptr_t commonlib_id_to_address(size_t id) {
         return REL::ID(id).address();
     }
@@ -393,7 +394,6 @@ extern "C" {
         return REL::Offset(offset).address();
     }
 
-    // 3. Прямая запись в память
     void commonlib_safe_write(uintptr_t addr, const void* data, size_t len) {
         REL::safe_write(addr, data, len);
     }

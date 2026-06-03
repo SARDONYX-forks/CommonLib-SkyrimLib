@@ -197,7 +197,7 @@ macro_rules! impl_enum_try_from_sparse {
 mod tests {
     use super::Enum;
 
-    #[repr(i32)]
+    #[repr(u8)]
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum TestValue {
         Zero = 0,
@@ -205,18 +205,18 @@ mod tests {
         Two = 2,
     }
 
-    impl TryFrom<u8> for TestValue {
-        type Error = ();
+    // impl TryFrom<u8> for TestValue {
+    //     type Error = ();
 
-        fn try_from(value: u8) -> Result<Self, Self::Error> {
-            match value {
-                0 => Ok(Self::Zero),
-                1 => Ok(Self::One),
-                2 => Ok(Self::Two),
-                _ => Err(()),
-            }
-        }
-    }
+    //     fn try_from(value: u8) -> Result<Self, Self::Error> {
+    //         match value {
+    //             0 => Ok(Self::Zero),
+    //             1 => Ok(Self::One),
+    //             2 => Ok(Self::Two),
+    //             _ => Err(()),
+    //         }
+    //     }
+    // }
 
     crate::impl_enum_type!(TestValue => i32);
     crate::impl_enum_type!(TestValue => u8);
