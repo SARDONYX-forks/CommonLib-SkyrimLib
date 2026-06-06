@@ -3,6 +3,37 @@ use std::{
     path::{Path, PathBuf},
 };
 
+fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+
+    stage_commonlib_test_address_libraries()
+        .expect("failed to stage CommonLib test address libraries");
+
+    #[cfg(not(feature = "prebuilt"))]
+    xmake_build();
+    #[cfg(feature = "prebuilt")]
+    fetch_libs();
+
+    println!("cargo:rustc-link-lib=static=commonlib_bridge");
+    println!("cargo:rustc-link-lib=static=commonlibsse-ng");
+
+    println!("cargo:rustc-link-lib=version");
+    println!("cargo:rustc-link-lib=user32");
+    println!("cargo:rustc-link-lib=advapi32");
+    println!("cargo:rustc-link-lib=bcrypt");
+    println!("cargo:rustc-link-lib=ole32");
+    println!("cargo:rustc-link-lib=shell32");
+    println!("cargo:rustc-link-lib=dbghelp");
+
+    println!("cargo:rustc-link-lib=d3d11");
+    println!("cargo:rustc-link-lib=dxgi");
+    println!("cargo:rustc-link-lib=d3dcompiler");
+
+    println!("cargo:rerun-if-changed=cpp/src");
+    println!("cargo:rerun-if-changed=cpp/include");
+    println!("cargo:rerun-if-changed=cpp/xmake.lua");
+}
+
 fn stage_commonlib_test_address_libraries() -> io::Result<()> {
     let manifest_dir =
         PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR is always set"));
@@ -46,12 +77,46 @@ fn stage_commonlib_test_address_libraries() -> io::Result<()> {
     Ok(())
 }
 
-fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
+/// Download C++ libraries
+#[cfg(feature = "prebuilt")]
+fn fetch_libs() {
+    use std::io::Cursor;
 
-    stage_commonlib_test_address_libraries()
-        .expect("failed to stage CommonLib test address libraries");
+    let crate_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let lib_root = crate_root.join("cpp").join("build");
+    if std::fs::exists(lib_root.join("commonlib_bridge.lib")).unwrap_or(false) {
+        println!("cargo:rustc-link-search=native={}", lib_root.display());
+        return;
+    }
+    let out_dir = lib_root.as_path();
+    std::fs::create_dir_all(out_dir).unwrap();
 
+    let url = format!(
+        "https://github.com/SARDONYX-forks/CommonLib-SkyrimLib/releases/download/v2.2.3/commonlib_bridge.zip",
+    );
+
+    // Download zip(Wait up to 30 minutes to download 160 MB considering the slow network.)
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(60 * 30))
+        .build()
+        .unwrap();
+    let response = client
+        .get(&url)
+        .send()
+        .unwrap_or_else(|e| panic!("Failed to download ZIP. url: {url}, err: {e}"));
+    let bytes = response.bytes().expect("Failed to read response bytes");
+
+    let mut archive =
+        zip::read::ZipArchive::new(Cursor::new(bytes)).unwrap_or_else(|err| panic!("{err}"));
+    archive
+        .extract(out_dir)
+        .unwrap_or_else(|err| panic!("{err}"));
+
+    println!("cargo:rustc-link-search=native={}", lib_root.display());
+}
+
+#[cfg(not(feature = "prebuilt"))]
+fn xmake_build() {
     let mut config = xmake::Config::new("cpp");
 
     let profile = env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
@@ -90,25 +155,6 @@ fn main() {
                 "xmake returned no artifact link directory for profile={profile}, mode={build_mode}; available linkdirs: {available}"
             )
         });
-
     println!("cargo:rustc-link-search=native={}", dst.display());
-    println!("cargo:rustc-link-lib=static=commonlib_bridge");
-    println!("cargo:rustc-link-lib=static=commonlibsse-ng");
     println!("cargo:rustc-link-lib=static=spdlog");
-
-    println!("cargo:rustc-link-lib=version");
-    println!("cargo:rustc-link-lib=user32");
-    println!("cargo:rustc-link-lib=advapi32");
-    println!("cargo:rustc-link-lib=bcrypt");
-    println!("cargo:rustc-link-lib=ole32");
-    println!("cargo:rustc-link-lib=shell32");
-    println!("cargo:rustc-link-lib=dbghelp");
-
-    println!("cargo:rustc-link-lib=d3d11");
-    println!("cargo:rustc-link-lib=dxgi");
-    println!("cargo:rustc-link-lib=d3dcompiler");
-
-    println!("cargo:rerun-if-changed=cpp/src");
-    println!("cargo:rerun-if-changed=cpp/include");
-    println!("cargo:rerun-if-changed=cpp/xmake.lua");
 }

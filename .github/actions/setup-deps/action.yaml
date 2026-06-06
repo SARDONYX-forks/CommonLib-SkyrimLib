@@ -29,11 +29,11 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: xmake-io/github-action-setup-xmake@v1
-      with:
-        xmake-version: "3.0.9"
-        actions-cache-folder: ".xmake-cache"
-        actions-cache-key: ${{ inputs.platform }}-xmake-build-cache-
+    # - uses: xmake-io/github-action-setup-xmake@v1
+    #   with:
+    #     xmake-version: "3.0.9"
+    #     actions-cache-folder: ".xmake-cache"
+    #     actions-cache-key: ${{ inputs.platform }}-xmake-build-cache-
 
     - name: Rust setup
       uses: dtolnay/rust-toolchain@stable
