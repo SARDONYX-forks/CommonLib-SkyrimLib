@@ -2,6 +2,7 @@
 name = "rex_com"
 version = "0.1.0"
 edition = "2024"
+license = "GPL-3.0-or-later"
 description = "COM interfaces (IUnknown/DXGI/D3D11) mirrored from CommonLib REX/W32, usable without libskyrim"
 
 [lib]
