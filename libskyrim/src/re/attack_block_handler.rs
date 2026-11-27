@@ -3,7 +3,7 @@ use core_util::inherit;
 use crate::offsets::offsets_rtti::RTTI_AttackBlockHandler;
 use crate::offsets::offsets_vtable::VTABLE_AttackBlockHandler;
 use crate::re::{BSFixedString, HeldStateHandler};
-use crate::relocation::{RttiType, VariantID, VariantOffset};
+use crate::relocation::{RttiType, VariantID};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -26,7 +26,6 @@ pub struct AttackBlockHandlerData {
     pub initial_power_attack_delay: f32,
     pub pad34: u32,
     pub subsequent_power_attack_delay: f32,
-    pub pad3c: u32,
     pub ignore: bool,
     pub unk41: bool,
     pub held_left: bool,
@@ -44,10 +43,9 @@ const _: () =
     assert!(core::mem::offset_of!(AttackBlockHandlerData, initial_power_attack_delay) == 0x18);
 const _: () =
     assert!(core::mem::offset_of!(AttackBlockHandlerData, subsequent_power_attack_delay) == 0x20);
-const _: () = assert!(core::mem::offset_of!(AttackBlockHandlerData, pad3c) == 0x24);
-const _: () = assert!(core::mem::offset_of!(AttackBlockHandlerData, ignore) == 0x28);
-const _: () = assert!(core::mem::offset_of!(AttackBlockHandlerData, held_right) == 0x2B);
-const _: () = assert!(core::mem::offset_of!(AttackBlockHandlerData, unk44) == 0x2C);
+const _: () = assert!(core::mem::offset_of!(AttackBlockHandlerData, ignore) == 0x24);
+const _: () = assert!(core::mem::offset_of!(AttackBlockHandlerData, held_right) == 0x27);
+const _: () = assert!(core::mem::offset_of!(AttackBlockHandlerData, unk44) == 0x28);
 
 #[repr(C)]
 pub struct AttackBlockHandler {
@@ -66,17 +64,17 @@ inherit!(AttackBlockHandler : HeldStateHandler, base);
 impl AttackBlockHandler {
     pub const RTTI: VariantID = RTTI_AttackBlockHandler;
     pub const VTABLE: &'static [VariantID] = &VTABLE_AttackBlockHandler;
-    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x18, 0x18, 0x30);
-
+    // SE / AE < 1.7.99: `0x18`, AE 1.7.99+: `0x58`, VR: `0x60`
+    // (after VR's larger `HeldStateHandler`).
     crate::runtime_data_accessor! {
         pub fn data() -> AttackBlockHandlerData {
-            offset: Self::DATA_OFFSET
+            version: crate::version::RUNTIME_SSE_1_7_99, se: 0x18, ae: 0x58, vr: 0x60
         }
     }
 
     crate::runtime_data_mut_accessor! {
         pub fn data_mut() -> AttackBlockHandlerData {
-            offset: Self::DATA_OFFSET
+            version: crate::version::RUNTIME_SSE_1_7_99, se: 0x18, ae: 0x58, vr: 0x60
         }
     }
 }

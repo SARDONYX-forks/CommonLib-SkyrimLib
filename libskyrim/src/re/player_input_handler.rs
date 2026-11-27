@@ -1,11 +1,17 @@
 use crate::offsets::offsets_rtti::RTTI_PlayerInputHandler;
 use crate::offsets::offsets_vtable::VTABLE_PlayerInputHandler;
-use crate::re::{
-    BSFixedString, ButtonEvent, InputEvent, MouseMoveEvent, PlayerControlsData, ThumbstickEvent,
-};
-use crate::relocation::{RttiType, VariantID, VariantOffset};
+use crate::re::{ButtonEvent, InputEvent, MouseMoveEvent, PlayerControlsData, ThumbstickEvent};
+use crate::relocation::{RttiType, VariantID};
+use crate::version::RUNTIME_SSE_1_7_99;
 
 /// C++ `RE::PlayerInputHandler`
+///
+/// The object is `0x10` bytes on every runtime. The vtable differs:
+///
+/// - SE / AE < 1.7.99: `02` thumbstick, `03` mouse move, `04` button
+/// - AE >= 1.7.99: `02` motion gesture, `03` sixaxis, then thumbstick/mouse/button
+///   shifted by [`Self::AE1799_ADDED_VFUNC_COUNT`]
+/// - VR: `02` touchpad swipe, `03` touchpad position, `04..06` thumbstick/mouse/button
 #[repr(C)]
 pub struct PlayerInputHandler {
     pub vtable: *const usize,               // 00
@@ -27,9 +33,9 @@ impl PlayerInputHandler {
     pub const RTTI: VariantID = RTTI_PlayerInputHandler;
     pub const VTABLE: &'static [VariantID] = &VTABLE_PlayerInputHandler;
 
-    pub const VR_UNK10_OFFSET: VariantOffset = VariantOffset::new_se_ae(0x0, 0x10);
-    pub const VR_UNK18_OFFSET: VariantOffset = VariantOffset::new_se_ae(0x0, 0x18);
-    pub const VR_UNK20_OFFSET: VariantOffset = VariantOffset::new_se_ae(0x0, 0x20);
+    /// Number of virtual functions inserted after `CanProcess` in AE 1.7.99
+    /// (`ProcessMotionGesture`, `ProcessSixaxis`).
+    pub const AE1799_ADDED_VFUNC_COUNT: usize = 2;
 
     crate::virtual_method! {
         pub const VFUNC_DTOR: usize = 0x00;
@@ -41,39 +47,154 @@ impl PlayerInputHandler {
         pub fn can_process(event: *mut InputEvent) -> bool
     }
 
-    crate::virtual_method! {
-        pub const VFUNC_PROCESS_THUMBSTICK: usize = 0x02;
-        pub fn process_thumbstick(event: *mut ThumbstickEvent, data: *mut PlayerControlsData)
-    }
-
-    crate::virtual_method! {
-        pub const VFUNC_PROCESS_MOUSE_MOVE: usize = 0x03;
-        pub fn process_mouse_move(event: *mut MouseMoveEvent, data: *mut PlayerControlsData)
-    }
-
-    crate::virtual_method! {
-        pub const VFUNC_PROCESS_BUTTON: usize = 0x04;
-        pub fn process_button(event: *mut ButtonEvent, data: *mut PlayerControlsData)
-    }
-
+    /// Runtime vtable slot of `ProcessThumbstick`.
     #[inline(always)]
-    pub fn unk_05(&mut self) {
-        crate::runtime::require_vr("PlayerInputHandler::unk_05");
-        crate::relocate_virtual!(
-            extern "C" fn(*mut Self),
-            self as *mut Self,
-            VariantOffset::new_se_ae(0x0, 0x05)
+    pub fn vfunc_process_thumbstick() -> usize {
+        crate::runtime::version_shift_vr(
+            0x02,
+            Self::AE1799_ADDED_VFUNC_COUNT,
+            RUNTIME_SSE_1_7_99,
+            0x04,
+        )
+    }
+
+    /// Runtime vtable slot of `ProcessMouseMove`.
+    #[inline(always)]
+    pub fn vfunc_process_mouse_move() -> usize {
+        crate::runtime::version_shift_vr(
+            0x03,
+            Self::AE1799_ADDED_VFUNC_COUNT,
+            RUNTIME_SSE_1_7_99,
+            0x05,
+        )
+    }
+
+    /// Runtime vtable slot of `ProcessButton`.
+    #[inline(always)]
+    pub fn vfunc_process_button() -> usize {
+        crate::runtime::version_shift_vr(
+            0x04,
+            Self::AE1799_ADDED_VFUNC_COUNT,
+            RUNTIME_SSE_1_7_99,
+            0x06,
         )
     }
 
     #[inline(always)]
-    pub fn unk_06(&mut self) {
-        crate::runtime::require_vr("PlayerInputHandler::unk_06");
+    pub fn process_thumbstick(
+        &mut self,
+        event: *mut ThumbstickEvent,
+        data: *mut PlayerControlsData,
+    ) {
         crate::relocate_virtual!(
-            extern "C" fn(*mut Self),
+            extern "C" fn(*mut Self, *mut ThumbstickEvent, *mut PlayerControlsData),
             self as *mut Self,
-            VariantOffset::new_se_ae(0x0, 0x06)
+            Self::vfunc_process_thumbstick(),
+            event,
+            data
         )
+    }
+
+    #[inline(always)]
+    pub fn process_mouse_move(
+        &mut self,
+        event: *mut MouseMoveEvent,
+        data: *mut PlayerControlsData,
+    ) {
+        crate::relocate_virtual!(
+            extern "C" fn(*mut Self, *mut MouseMoveEvent, *mut PlayerControlsData),
+            self as *mut Self,
+            Self::vfunc_process_mouse_move(),
+            event,
+            data
+        )
+    }
+
+    #[inline(always)]
+    pub fn process_button(&mut self, event: *mut ButtonEvent, data: *mut PlayerControlsData) {
+        crate::relocate_virtual!(
+            extern "C" fn(*mut Self, *mut ButtonEvent, *mut PlayerControlsData),
+            self as *mut Self,
+            Self::vfunc_process_button(),
+            event,
+            data
+        )
+    }
+
+    /// `ProcessMotionGesture` (slot `02`, AE 1.7.99+ only; no-op elsewhere).
+    #[inline(always)]
+    pub fn process_motion_gesture(
+        &mut self,
+        event: *mut crate::re::MotionGestureEvent,
+        data: *mut PlayerControlsData,
+    ) {
+        if !crate::runtime::is_vr() && crate::runtime::is_at_least(RUNTIME_SSE_1_7_99) {
+            crate::relocate_virtual!(
+                extern "C" fn(
+                    *mut Self,
+                    *mut crate::re::MotionGestureEvent,
+                    *mut PlayerControlsData,
+                ),
+                self as *mut Self,
+                0x02usize,
+                event,
+                data
+            )
+        }
+    }
+
+    /// `ProcessSixaxis` (slot `03`, AE 1.7.99+ only; no-op elsewhere).
+    #[inline(always)]
+    pub fn process_sixaxis(
+        &mut self,
+        event: *mut crate::re::SixaxisEvent,
+        data: *mut PlayerControlsData,
+    ) {
+        if !crate::runtime::is_vr() && crate::runtime::is_at_least(RUNTIME_SSE_1_7_99) {
+            crate::relocate_virtual!(
+                extern "C" fn(*mut Self, *mut crate::re::SixaxisEvent, *mut PlayerControlsData),
+                self as *mut Self,
+                0x03usize,
+                event,
+                data
+            )
+        }
+    }
+
+    /// `ProcessVrWandTouchpadSwipe` (slot `02`, VR only; no-op elsewhere).
+    #[inline(always)]
+    pub fn process_vr_wand_touchpad_swipe(
+        &mut self,
+        event: *mut core::ffi::c_void,
+        data: *mut PlayerControlsData,
+    ) {
+        if crate::runtime::is_vr() {
+            crate::relocate_virtual!(
+                extern "C" fn(*mut Self, *mut core::ffi::c_void, *mut PlayerControlsData),
+                self as *mut Self,
+                0x02usize,
+                event,
+                data
+            )
+        }
+    }
+
+    /// `ProcessVrWandTouchpadPosition` (slot `03`, VR only; no-op elsewhere).
+    #[inline(always)]
+    pub fn process_vr_wand_touchpad_position(
+        &mut self,
+        event: *mut core::ffi::c_void,
+        data: *mut PlayerControlsData,
+    ) {
+        if crate::runtime::is_vr() {
+            crate::relocate_virtual!(
+                extern "C" fn(*mut Self, *mut core::ffi::c_void, *mut PlayerControlsData),
+                self as *mut Self,
+                0x03usize,
+                event,
+                data
+            )
+        }
     }
 
     #[inline(always)]
@@ -85,24 +206,6 @@ impl PlayerInputHandler {
     pub fn set_input_event_handling_enabled(&mut self, enabled: bool) {
         self.input_event_handling_enabled = enabled;
     }
-
-    crate::runtime_data_accessor! {
-        pub fn vr_unk10() -> u64 {
-            offset: Self::VR_UNK10_OFFSET
-        }
-    }
-
-    crate::runtime_data_accessor! {
-        pub fn vr_unk18() -> BSFixedString {
-            offset: Self::VR_UNK18_OFFSET
-        }
-    }
-
-    crate::runtime_data_accessor! {
-        pub fn vr_unk20() -> u64 {
-            offset: Self::VR_UNK20_OFFSET
-        }
-    }
 }
 
 pub trait PlayerInputHandlerExt {
@@ -110,8 +213,6 @@ pub trait PlayerInputHandlerExt {
     fn process_thumbstick(&mut self, event: *mut ThumbstickEvent, data: *mut PlayerControlsData);
     fn process_mouse_move(&mut self, event: *mut MouseMoveEvent, data: *mut PlayerControlsData);
     fn process_button(&mut self, event: *mut ButtonEvent, data: *mut PlayerControlsData);
-    fn unk_05(&mut self);
-    fn unk_06(&mut self);
     fn is_input_event_handling_enabled(&self) -> bool;
     fn set_input_event_handling_enabled(&mut self, enabled: bool);
 }
@@ -138,16 +239,6 @@ where
     #[inline(always)]
     fn process_button(&mut self, event: *mut ButtonEvent, data: *mut PlayerControlsData) {
         PlayerInputHandler::process_button(self.as_mut(), event, data)
-    }
-
-    #[inline(always)]
-    fn unk_05(&mut self) {
-        PlayerInputHandler::unk_05(self.as_mut())
-    }
-
-    #[inline(always)]
-    fn unk_06(&mut self) {
-        PlayerInputHandler::unk_06(self.as_mut())
     }
 
     #[inline(always)]

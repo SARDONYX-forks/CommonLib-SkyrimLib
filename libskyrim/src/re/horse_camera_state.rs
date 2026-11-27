@@ -28,7 +28,7 @@ inherit!(HorseCameraState : ThirdPersonState, base);
 impl HorseCameraState {
     pub const RTTI: VariantID = RTTI_HorseCameraState;
     pub const VTABLE: &'static [VariantID] = &VTABLE_HorseCameraState;
-    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0xE8, 0xE8, 0x100);
+    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0xE8, 0xE8, 0xE8);
 
     crate::runtime_data_accessor! {
         pub fn data() -> HorseCameraStateData {

@@ -199,9 +199,28 @@ impl FormCastable for TESTopicInfo {
 
 inherit!(TESTopicInfo : TESForm);
 
+/// C++ `RE::TESTopicInfo::AE1799_RUNTIME_DATA` (at `0x48`).
+#[repr(C)]
+pub struct TESTopicInfoAe1799RuntimeData {
+    pub unk48: [u8; 0x8], // 48
+}
+
 impl TESTopicInfo {
     pub const RTTI: VariantID = RTTI_TESTopicInfo;
     pub const VTABLE: &'static [VariantID] = &VTABLE_TESTopicInfo;
+
+    // AE 1.7.99+ only: `None` on SE, AE < 1.7.99 and VR.
+    crate::runtime_optional_data_accessor! {
+        pub fn ae1799_runtime_data() -> TESTopicInfoAe1799RuntimeData {
+            version: crate::version::RUNTIME_SSE_1_7_99, se: 0, ae: 0x48, vr: 0
+        }
+    }
+
+    crate::runtime_optional_data_mut_accessor! {
+        pub fn ae1799_runtime_data_mut() -> TESTopicInfoAe1799RuntimeData {
+            version: crate::version::RUNTIME_SSE_1_7_99, se: 0, ae: 0x48, vr: 0
+        }
+    }
     pub const FORMTYPE: FormType = FormType::Info;
 
     // override (TESForm)

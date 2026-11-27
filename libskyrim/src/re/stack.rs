@@ -89,8 +89,14 @@ impl BSTSmartPointerIntrusiveRefCountable for Stack {
     #[inline(always)]
     unsafe fn bst_delete(&self) {
         let this = (self as *const Self).cast_mut();
+        // C++ `~Stack()` followed by `operator delete`.
         unsafe {
             (*this).dtor();
+            core::ptr::drop_in_place(core::ptr::addr_of_mut!((*this).next_stack));
+            core::ptr::drop_in_place(core::ptr::addr_of_mut!((*this).callback));
+            core::ptr::drop_in_place(core::ptr::addr_of_mut!((*this).owning_tasklet));
+            core::ptr::drop_in_place(core::ptr::addr_of_mut!((*this).return_value));
+            core::ptr::drop_in_place(core::ptr::addr_of_mut!((*this).pages));
             crate::ffi::commonlib_free(this.cast());
         }
     }
@@ -124,7 +130,97 @@ impl Stack {
         unsafe { &mut *func(self, frame, index, page_hint) }
     }
 
-    crate::relocation_func! {
-        pub fn dtor(&mut self) => crate::relocation::RelocationID::new(97742, 104480)
+    /// Body of C++ `~Stack()`: pops every frame. Member destructors are run by
+    /// the owner (see `bst_delete`). The former `RELOCATION_ID(97742, 104480)`
+    /// binding was wrong and was replaced upstream by this implementation.
+    pub fn dtor(&mut self) {
+        while self.pop_frame() {}
+    }
+
+    /// C++ `Stack::PopFrame()`.
+    // TODO: `PushFrame` / `PushBlankFrame` (CommonLib #550) are not ported yet;
+    // they need `IMemoryPagePolicy::AllocatePage/GetLargestAvailablePage` and
+    // `StackFrame::InitFrame` bindings.
+    pub fn pop_frame(&mut self) -> bool {
+        if self.frames == 0 || self.pages.is_empty() || self.top.is_null() {
+            return false;
+        }
+
+        let frame = self.top;
+        unsafe {
+            if let Some(profile) = self.profile_policy.as_mut() {
+                // Hold a reference to the function across the call; a frame
+                // without a function is not reported.
+                let function = (*frame).owning_function.clone();
+                if let Some(f) = function.get().as_ref() {
+                    // IProfilePolicy::StackFramePopped (04)
+                    let vtable =
+                        *(profile as *mut crate::re::IProfilePolicy as *const *const usize);
+                    let popped: extern "C" fn(
+                        *mut crate::re::IProfilePolicy,
+                        VMStackID,
+                        u32,
+                        *const Variable,
+                        *const crate::re::BSFixedString,
+                        *const crate::re::BSFixedString,
+                        *const crate::re::BSFixedString,
+                    ) = core::mem::transmute(*vtable.add(4));
+                    popped(
+                        profile,
+                        self.stack_id,
+                        self.frames - 1,
+                        &(*frame).self_,
+                        f.get_object_type_name(),
+                        f.get_state_name(),
+                        f.get_name(),
+                    );
+                }
+            }
+
+            self.top = (*frame).previous_frame;
+            let mut kept_bytes: u32 = ((*frame).size + 4) << 4; // read before the teardown
+            (*frame).dtor();
+
+            let mut page_index = self.get_page_for_frame(frame);
+            if page_index == u32::MAX {
+                return false;
+            }
+            if frame.cast::<core::ffi::c_void>()
+                != (*self.pages[page_index as usize].page.get()).get_head()
+            {
+                page_index += 1;
+            }
+
+            // Every page from `page_index` on is given back to the policy.
+            while self.pages.size() > page_index {
+                let entry = self.pages.back_mut();
+                let page_size = entry.page.get().as_ref().map_or(0, |p| p.page_size);
+                // before DisposePage zeroes pageSize
+                kept_bytes = kept_bytes
+                    .wrapping_add(entry.available_memory_in_bytes)
+                    .wrapping_sub(page_size);
+                // IMemoryPagePolicy::DisposePage (04)
+                let policy = self.policy;
+                if !policy.is_null() {
+                    let vtable = *(policy as *const *const usize);
+                    let dispose: extern "C" fn(
+                        *mut IMemoryPagePolicy,
+                        *mut BSTAutoPointer<MemoryPage>,
+                    ) = core::mem::transmute(*vtable.add(4));
+                    dispose(policy, &mut entry.page);
+                }
+                drop(self.pages.pop_back()); // frees the page if the policy did not take it
+            }
+
+            if kept_bytes != 0 && page_index != 0 {
+                core::ptr::write_bytes(frame.cast::<u8>(), 0, kept_bytes as usize);
+                let entry = &mut self.pages[(page_index - 1) as usize];
+                entry.available_memory_in_bytes =
+                    entry.available_memory_in_bytes.wrapping_add(kept_bytes);
+            }
+        }
+
+        self.frames -= 1;
+        true
     }
 }

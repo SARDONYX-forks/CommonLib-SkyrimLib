@@ -27,7 +27,7 @@ impl VirtualMachine {
         if vm.is_null() {
             core::ptr::null_mut()
         } else {
-            unsafe { (*vm).impl_.cast() }
+            unsafe { (*vm).get_virtual_machine().cast() }
         }
     }
 }

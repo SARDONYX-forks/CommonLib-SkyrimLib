@@ -299,7 +299,7 @@ impl InventoryChanges {
     }
 
     crate::relocation_func! {
-        pub fn get_item_count(&mut self, obj: *mut TESBoundObject) -> i16 => RelocationID::new(15868, 16047)
+        pub fn get_item_count(&mut self, obj: *mut TESBoundObject) -> i16 => RelocationID::new(15868, 16108)
     }
 
     crate::relocation_func! {
@@ -403,7 +403,7 @@ impl InventoryChanges {
             item_list: *mut ExtraDataList,
             old_form: *mut TESForm,
             new_form: *mut TESForm
-        ) => RelocationID::new(15907, 16149)
+        ) => RelocationID::new(15907, 16147)
     }
 
     crate::relocation_func! {

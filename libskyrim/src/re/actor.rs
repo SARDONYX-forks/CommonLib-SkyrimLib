@@ -2804,7 +2804,7 @@ impl Actor {
             object: *const TESForm,
             extra_list: *const ExtraDataList,
             is_left: bool
-        ) => RelocationID::new(38752, 37803)
+        ) => RelocationID::new(37803, 38752)
     }
 
     #[inline(always)]

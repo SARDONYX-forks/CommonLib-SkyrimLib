@@ -148,7 +148,29 @@ impl Object {
         }
     }
 
-    crate::relocation_func! {
-        pub fn dtor(&mut self) => crate::relocation::RelocationID::new(97462, 104246)
+    /// C++ `~Object()`.
+    ///
+    /// The previous `RELOCATION_ID(97462, 104246)` binding was wrong and was
+    /// replaced upstream by this inline implementation.
+    pub fn dtor(&mut self) {
+        if self.is_constructed() {
+            let size = unsafe { self.type_.get().as_ref() }.map_or(0, |t| t.get_variable_count());
+            for i in 0..size as usize {
+                unsafe { (*self.variables.as_mut_ptr().add(i)).set_none() };
+            }
+            // constructed = false, initialized = false
+            self.flags_and_remaining_props &= !0x3;
+        }
+
+        let lock = (self.lock_structure as usize & !1usize) as *const core::sync::atomic::AtomicU32;
+        if let Some(lock) = unsafe { lock.as_ref() } {
+            lock.fetch_sub(1, core::sync::atomic::Ordering::AcqRel);
+        }
+
+        // Member destructors (`currentState`, `type`).
+        unsafe {
+            core::ptr::drop_in_place(&mut self.current_state);
+            core::ptr::drop_in_place(&mut self.type_);
+        }
     }
 }

@@ -34,7 +34,7 @@ inherit!(TogglePOVHandler : HeldStateHandler, base);
 impl TogglePOVHandler {
     pub const RTTI: VariantID = RTTI_TogglePOVHandler;
     pub const VTABLE: &'static [VariantID] = &VTABLE_TogglePOVHandler;
-    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x18, 0x18, 0x30);
+    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x18, 0x18, 0x60);
 
     crate::runtime_data_accessor! {
         pub fn data() -> TogglePOVHandlerData {

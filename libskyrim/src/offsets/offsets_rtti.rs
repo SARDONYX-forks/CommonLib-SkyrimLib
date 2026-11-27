@@ -3012,7 +3012,7 @@ pub const RTTI_BGSSaveLoadManager: VariantID = VariantID::new(686602, 394445, 0x
 pub const RTTI_BSTEventSource_BGSSaveLoadManagerEvent_: VariantID =
     VariantID::new(686605, 394448, 0x1f02130);
 pub const RTTI___LoadGameMissingContentCallBack: VariantID =
-    VariantID::new(686614, 394457, 0x1f02440);
+    VariantID::new(686614, 502590, 0x1f02440);
 pub const RTTI_NiTMapBase_DFALL_NiTMapItem_ENUM_FORM_ID_BSSimpleList_SavedFormData________ENUM_FORM_ID_BSSimpleList_SavedFormData______: VariantID = VariantID::new(686617, 394460, 0x1f02520);
 pub const RTTI_NiTMap_ENUM_FORM_ID_BSSimpleList_SavedFormData______: VariantID =
     VariantID::new(686616, 394459, 0x1f024c0);
@@ -3696,6 +3696,9 @@ pub const RTTI_LookHandler: VariantID = VariantID::new(687052, 394901, 0x1f0b510
 pub const RTTI_MovementHandler: VariantID = VariantID::new(687051, 394900, 0x1f0b4e8);
 pub const RTTI_SprintHandler: VariantID = VariantID::new(687053, 394902, 0x1f0b538);
 pub const RTTI_AttackBlockHandler: VariantID = VariantID::new(687060, 394909, 0x1f0b658);
+pub const RTTI_AmiiboEvent: VariantID = VariantID::new(0, 564083, 0);
+pub const RTTI_MotionGestureEvent: VariantID = VariantID::new(0, 564082, 0);
+pub const RTTI_SixaxisEvent: VariantID = VariantID::new(0, 564068, 0);
 pub const RTTI_ReadyWeaponHandler: VariantID = VariantID::new(687054, 394903, 0x1f0b560);
 pub const RTTI_ActivateHandler: VariantID = VariantID::new(687057, 394906, 0x1f0b5e0);
 pub const RTTI_AutoMoveHandler: VariantID = VariantID::new(687055, 394904, 0x1f0b590);

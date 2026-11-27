@@ -11,8 +11,8 @@ pub struct Array {
     pub pad04: u32,                  // 04
     pub element_type: TypeInfo,      // 08
     pub size_: u32,                  // 10
-    pub pad14: u32,                  // 14
-    pub lock: BSSpinLock,            // 18
+    pub lock: BSSpinLock,            // 14
+    pub pad1c: u32,                  // 1C
     pub data: [Variable; 0],         // 20
 }
 
@@ -20,7 +20,7 @@ const _: () = assert!(core::mem::size_of::<Array>() == 0x20);
 const _: () = assert!(core::mem::offset_of!(Array, base) == 0x00);
 const _: () = assert!(core::mem::offset_of!(Array, element_type) == 0x08);
 const _: () = assert!(core::mem::offset_of!(Array, size_) == 0x10);
-const _: () = assert!(core::mem::offset_of!(Array, lock) == 0x18);
+const _: () = assert!(core::mem::offset_of!(Array, lock) == 0x14);
 const _: () = assert!(core::mem::offset_of!(Array, data) == 0x20);
 
 inherit!(Array : BSIntrusiveRefCounted);

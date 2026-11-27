@@ -80,18 +80,26 @@ pub struct PlayerCameraVRRuntimeData {
         *mut TESCameraState,
         { CameraStates::VR_TOTAL * core::mem::size_of::<*mut TESCameraState>() },
     >,
-    pub camera_states: [BSTSmartPointer<TESCameraState>; CameraStates::VR_TOTAL],
-    pub rigid_body: crate::re::NiPointer<bhkRigidBody>,
-    pub object_fade_handle: u32,
-    pub lock: BSSpinLock,
-    pub vr_pad144: [u8; 14],
+    pub camera_states: [BSTSmartPointer<TESCameraState>; CameraStates::VR_TOTAL], // 80 (C0)
+    // TODO: `PlayerCamera::Unk120` is not translated; raw pointer for now.
+    pub unk120: *mut core::ffi::c_void,                 // F0 (130)
+    pub rigid_body: crate::re::NiPointer<bhkRigidBody>, // F8 (138)
+    pub object_fade_handle: u32,                        // 100 (140)
+    pub unk144: u32,                                    // 104 (144) - default 0xFFFFFFFF
+    pub unk148: bool,                                   // 108 (148)
+    pub pad149: [u8; 3],                                // 109
+    pub lock: BSSpinLock,                               // 10C (14C)
+    pub unk154: u32,                                    // 114 (154)
 }
 
 const _: () = assert!(core::mem::size_of::<PlayerCameraVRRuntimeData>() == 0x118);
 const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, camera_states) == 0x80);
-const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, rigid_body) == 0xF0);
-const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, object_fade_handle) == 0xF8);
-const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, lock) == 0xFC);
+const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, unk120) == 0xF0);
+const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, rigid_body) == 0xF8);
+const _: () =
+    assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, object_fade_handle) == 0x100);
+const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, lock) == 0x10C);
+const _: () = assert!(core::mem::offset_of!(PlayerCameraVRRuntimeData, unk154) == 0x114);
 
 #[repr(C)]
 pub struct PlayerCameraRuntimeData2 {

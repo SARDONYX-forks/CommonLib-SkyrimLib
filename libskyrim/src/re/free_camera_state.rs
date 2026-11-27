@@ -32,7 +32,7 @@ impl FreeCameraState {
     pub const RTTI: VariantID = RTTI_FreeCameraState;
     pub const VTABLE: &'static [VariantID] = &VTABLE_FreeCameraState;
     pub const PLAYER_INPUT_HANDLER_OFFSET: VariantOffset = VariantOffset::new(0x20, 0x20, 0x20);
-    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x30, 0x30, 0x48);
+    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x30, 0x30, 0x30);
 
     crate::runtime_cast_accessor! {
         pub fn player_input_handler() -> PlayerInputHandler {

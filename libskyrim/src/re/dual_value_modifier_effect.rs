@@ -9,16 +9,17 @@ use crate::virtual_method;
 /// C++ `RE::DualValueModifierEffect`
 #[repr(C)]
 pub struct DualValueModifierEffect {
-    pub base: ValueModifierEffect,         // 00
-    pub secondary_actor_value: ActorValue, // 98
-    pub secondary_av_weight: f32,          // 9C
+    pub base: ValueModifierEffect, // 00
+    /// The ctor stores `mgef->data.secondAVWeight` here (0.0 when
+    /// `data.secondaryAV` is `kNone`); the secondary actor value itself is not
+    /// cached -- read it through `get_additional_actor_value()`.
+    pub secondary_av_weight: f32, // 98
+    pub pad9c: u32,                // 9C
 }
 
 const _: () = assert!(core::mem::size_of::<DualValueModifierEffect>() == 0xA0);
 const _: () = assert!(core::mem::offset_of!(DualValueModifierEffect, base) == 0x00);
-const _: () =
-    assert!(core::mem::offset_of!(DualValueModifierEffect, secondary_actor_value) == 0x98);
-const _: () = assert!(core::mem::offset_of!(DualValueModifierEffect, secondary_av_weight) == 0x9C);
+const _: () = assert!(core::mem::offset_of!(DualValueModifierEffect, secondary_av_weight) == 0x98);
 
 impl RttiType for DualValueModifierEffect {
     const RTTI: VariantID = RTTI_DualValueModifierEffect;

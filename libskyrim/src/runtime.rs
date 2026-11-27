@@ -138,6 +138,28 @@ pub fn relocate_if_newer<T: Copy>(version: Version, older: T, newer: T) -> T {
     if is_at_least(version) { newer } else { older }
 }
 
+/// `REL::VersionShift`: `offset + delta` when the running game is at least
+/// `threshold`, otherwise `offset`. Used for vtable slots that moved because a
+/// newer runtime inserted virtual functions.
+#[inline(always)]
+pub fn version_shift(offset: usize, delta: usize, threshold: Version) -> usize {
+    if is_at_least(threshold) {
+        offset + delta
+    } else {
+        offset
+    }
+}
+
+/// Flat (SE/AE) slot shifted by `delta` on `threshold`+, fixed slot on VR.
+#[inline(always)]
+pub fn version_shift_vr(flat: usize, delta: usize, threshold: Version, vr: usize) -> usize {
+    if is_vr() {
+        vr
+    } else {
+        version_shift(flat, delta, threshold)
+    }
+}
+
 #[inline(always)]
 pub fn relocate_versioned_all<T: Copy>(version: Version, se: T, ae: T, vr: T) -> T {
     if is_vr() {

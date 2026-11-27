@@ -293,7 +293,7 @@ impl BShkbAnimationGraph {
             &mut self,
             variable_name: &BSFixedString,
             input: bool
-        ) -> bool => RelocationID::new(63609, 62708)
+        ) -> bool => RelocationID::new(62710, 63607)
     }
 
     crate::relocation_func! {
@@ -301,7 +301,7 @@ impl BShkbAnimationGraph {
             &mut self,
             variable_name: &BSFixedString,
             input: f32
-        ) -> bool => RelocationID::new(63608, 62709)
+        ) -> bool => RelocationID::new(62709, 63608)
     }
 
     crate::relocation_func! {
@@ -309,6 +309,6 @@ impl BShkbAnimationGraph {
             &mut self,
             variable_name: &BSFixedString,
             input: i32
-        ) -> bool => RelocationID::new(63607, 62710)
+        ) -> bool => RelocationID::new(62708, 63609)
     }
 }

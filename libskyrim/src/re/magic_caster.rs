@@ -175,7 +175,7 @@ impl MagicCaster {
     }
 
     crate::relocation_func! {
-        pub fn play_release_sound(&mut self, item: *mut MagicItem) => RelocationID::new(33675, 34448)
+        pub fn play_release_sound(&mut self, item: *mut MagicItem) => RelocationID::new(33675, 34455)
     }
 
     crate::relocation_func! {
