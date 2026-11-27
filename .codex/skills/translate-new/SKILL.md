@@ -64,14 +64,14 @@ For each parent or embedded field type:
   for the RE translation, place it under `libskyrim/src/rex/*.rs` and import it
   from `crate::rex`.
 - If the translated type needs a source-backed smart-pointer construction path,
-  prefer the shared ABI-safe bridge pattern in `libskyrim/cpp/src/bridge.cpp`
+  prefer the shared out-param construction pattern in `libskyrim/src/ffi/` (pure Rust)
   and `libskyrim/src/ffi.rs`, then construct the Rust smart pointer through
   `hkRefPtr::try_construct_with(...)`, `NiPointer::try_construct_with(...)`, or
   `BSTSmartPointer::try_construct_with(...)`.
 - If a source-backed function returns or accepts a non-trivial C++ handle type
   such as `BSPointerHandle<T>` by value, do not model that raw ABI literally in
   Rust macro signatures even if the type is only 4 bytes wide. Use an honest
-  hidden out-param wrapper or a C++ bridge, then expose a Rust-friendly helper
+  hidden out-param wrapper in `libskyrim/src/ffi/`, then expose a Rust-friendly helper
   above it.
 
 Never replace a named parent or mixin with `[u8; N]`.

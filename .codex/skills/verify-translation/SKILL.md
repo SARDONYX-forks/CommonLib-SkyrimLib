@@ -67,7 +67,7 @@ preflight when the existing Rust file may already be mostly correct.
 - relocated, virtual, and hook-facing surfaces do not model non-trivial
   `BSPointerHandle<T>` descendants (`ActorHandle`, `ObjectRefHandle`,
   `ProjectileHandle`) by value at the raw ABI boundary; verify hidden
-  out-param or C++ bridge usage instead
+  out-param wrapper usage instead
 
 ### Visitors and functors
 

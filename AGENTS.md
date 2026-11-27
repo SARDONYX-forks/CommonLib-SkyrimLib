@@ -42,7 +42,7 @@ and private/source-only helpers that belong to the same translated type.
 When CommonLib constructs smart pointers on the C++ side, such as
 `make_hkref<T>()`, `make_nismart<T>()`, `make_smart<T>()`, or helper functions
 that fill smart-pointer out-params, prefer the ABI-safe bridge pattern through
-`libskyrim/cpp/src/bridge.cpp`, `libskyrim/src/ffi.rs`, and the Rust-side
+the pure-Rust `libskyrim/src/ffi/` layer (no C++ is linked), and the Rust-side
 `try_construct_with(...)` helpers on `hkRefPtr`, `NiPointer`, and
 `BSTSmartPointer`. Do not fake nontrivial C++ construction with raw Rust
 allocation alone.

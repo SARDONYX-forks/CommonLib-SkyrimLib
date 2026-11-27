@@ -49,7 +49,7 @@ Audit the requested translation and compare it to CommonLibVR.
 - whether any relocated, virtual, or hook-facing signature incorrectly models a
   non-trivial `BSPointerHandle<T>` descendant (`ActorHandle`,
   `ObjectRefHandle`, `ProjectileHandle`) by value instead of using an honest
-  out-param wrapper or C++ bridge
+  out-param wrapper in `libskyrim/src/ffi/`
 - `ID` / `Offset` usage
 - runtime-data accessor opportunities
 - `BSContainerForEachResult` unification opportunities for Rust-side sync traversal

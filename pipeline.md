@@ -41,7 +41,7 @@ translations and hook ports with Codex.
 - When CommonLib constructs smart pointers on the C++ side, such as
   `make_hkref<T>()`, `make_nismart<T>()`, `make_smart<T>()`, or helpers that
   fill smart-pointer out-params, prefer the shared ABI-safe bridge pattern:
-  add the C++ bridge entrypoint in `libskyrim/cpp/src/bridge.cpp`, declare it
+  add the pure-Rust helper in `libskyrim/src/ffi/`, declare it
   in `libskyrim/src/ffi.rs`, and construct the Rust smart pointer through
   `hkRefPtr::try_construct_with`, `NiPointer::try_construct_with`, or
   `BSTSmartPointer::try_construct_with`.

@@ -87,9 +87,11 @@ pub const RUNTIME_SSE_1_6_678_EPIC: Version = Version::new(1, 6, 678, RUNTIME_TY
 pub const RUNTIME_SSE_1_6_1130: Version = Version::new(1, 6, 1130, RUNTIME_TYPE_BETHESDA);
 pub const RUNTIME_SSE_1_6_1170: Version = Version::new(1, 6, 1170, RUNTIME_TYPE_BETHESDA);
 pub const RUNTIME_SSE_1_6_1179_GOG: Version = Version::new(1, 6, 1179, RUNTIME_TYPE_GOG);
+pub const RUNTIME_SSE_1_7_99: Version = Version::new(1, 7, 99, RUNTIME_TYPE_BETHESDA);
+pub const RUNTIME_SSE_1_7_104: Version = Version::new(1, 7, 104, RUNTIME_TYPE_BETHESDA);
 
 pub const RUNTIME_VR_1_4_15: Version = Version::new(1, 4, 15, RUNTIME_TYPE_VR);
 
 pub const RUNTIME_LATEST_SE: Version = RUNTIME_SSE_1_5_97;
-pub const RUNTIME_LATEST_AE: Version = RUNTIME_SSE_1_6_1170;
+pub const RUNTIME_LATEST_AE: Version = RUNTIME_SSE_1_7_104;
 pub const RUNTIME_LATEST_VR: Version = RUNTIME_VR_1_4_15;

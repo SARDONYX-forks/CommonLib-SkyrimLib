@@ -7,7 +7,7 @@ use core_util::Later;
 pub enum RuntimeType {
     Unknown,
     SE, // 1.5.97 and lower
-    AE, // 1.6.x
+    AE, // 1.6.x and 1.7.x
     VR, // Skyrim VR
 }
 
@@ -28,12 +28,10 @@ fn fallback_test_version() -> Version {
 
 #[inline(always)]
 fn runtime_from_version(version: Version) -> RuntimeType {
-    if version.minor() == 4 {
-        RuntimeType::VR
-    } else if version.minor() == 6 {
-        RuntimeType::AE
-    } else {
-        RuntimeType::SE
+    match crate::ffi::module::ModuleRuntime::from_version(version) {
+        crate::ffi::module::ModuleRuntime::VR => RuntimeType::VR,
+        crate::ffi::module::ModuleRuntime::AE => RuntimeType::AE,
+        crate::ffi::module::ModuleRuntime::SE => RuntimeType::SE,
     }
 }
 

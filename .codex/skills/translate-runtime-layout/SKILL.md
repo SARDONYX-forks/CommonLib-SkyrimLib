@@ -69,7 +69,7 @@ layout work.
   into fake runtime tails.
 - If a runtime-specific helper still needs source-backed smart-pointer
   construction, use the shared ABI-safe bridge pattern in
-  `libskyrim/cpp/src/bridge.cpp` and `libskyrim/src/ffi.rs` instead of a Rust-
+  the pure-Rust `libskyrim/src/ffi/` layer instead of a Rust-
   only allocation shortcut.
 - If you must leave an honest compromise, add a source-backed `// TODO:` comment
   at the exact site. Do not use `todo!()` / `unimplemented!()` in translated RE
