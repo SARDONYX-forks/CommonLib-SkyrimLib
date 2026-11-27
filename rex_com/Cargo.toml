@@ -1,0 +1,8 @@
+[package]
+name = "rex_com"
+version = "0.1.0"
+edition = "2024"
+description = "COM interfaces (IUnknown/DXGI/D3D11) mirrored from CommonLib REX/W32, usable without libskyrim"
+
+[lib]
+path = "src/lib.rs"

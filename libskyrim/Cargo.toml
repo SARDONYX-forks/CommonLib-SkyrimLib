@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 core-util = { path = "../core-util" }
 cstd = { path = "../cstd" }
+rex_com = { path = "../rex_com" }
 libskyrim-macros = { path = "../libskyrim-macros" }
 bitflags = "2.11.0"
 bytemuck = { version = "1.25.0", features = ["derive"] }

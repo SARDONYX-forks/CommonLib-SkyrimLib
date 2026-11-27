@@ -291,108 +291,108 @@ pub fn fatal_runtime(args: Arguments<'_>) -> ! {
 
 #[macro_export]
 macro_rules! skse_message {
-    ( $($arg:tt)* ) => {
+    ( $($arg:tt)* ) => {{
         $crate::skse::log::write(
             $crate::skse::log::LogType::File,
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
+    }};
 }
 
 #[macro_export]
 macro_rules! skse_warning {
-    ( window, $($arg:tt)* ) => {
+    ( window, $($arg:tt)* ) => {{
         $crate::skse::log::warning(
             $crate::skse::log::LogType::Window($crate::skse::log::MB_ICONWARNING),
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
-    ( log, $($arg:tt)* ) => {
+    }};
+    ( log, $($arg:tt)* ) => {{
         $crate::skse::log::warning(
             $crate::skse::log::LogType::File,
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
-    ( $($arg:tt)* ) => {
+    }};
+    ( $($arg:tt)* ) => {{
         $crate::skse::log::warning(
             $crate::skse::log::LogType::File,
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
+    }};
 }
 
 #[macro_export]
 macro_rules! skse_debug {
-    ( $($arg:tt)* ) => {
+    ( $($arg:tt)* ) => {{
         $crate::skse::log::debug(
             $crate::skse::log::LogType::File,
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
+    }};
 }
 
 #[macro_export]
 macro_rules! skse_error {
-    ( window, $($arg:tt)* ) => {
+    ( window, $($arg:tt)* ) => {{
         $crate::skse::log::error(
             $crate::skse::log::LogType::Window($crate::skse::log::MB_ICONERROR),
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
-    ( log, $($arg:tt)* ) => {
+    }};
+    ( log, $($arg:tt)* ) => {{
         $crate::skse::log::error(
             $crate::skse::log::LogType::File,
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
-    ( $($arg:tt)* ) => {
+    }};
+    ( $($arg:tt)* ) => {{
         $crate::skse::log::error(
             $crate::skse::log::LogType::File,
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
+    }};
 }
 
 #[macro_export]
 macro_rules! skse_fatal {
-    ( window, $($arg:tt)* ) => {
+    ( window, $($arg:tt)* ) => {{
         $crate::skse::log::fatal(
             $crate::skse::log::LogType::Window($crate::skse::log::MB_ICONERROR),
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
-    ( log, $($arg:tt)* ) => {
+    }};
+    ( log, $($arg:tt)* ) => {{
         $crate::skse::log::fatal(
             $crate::skse::log::LogType::File,
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
-    ( $($arg:tt)* ) => {
+    }};
+    ( $($arg:tt)* ) => {{
         $crate::skse::log::fatal(
             $crate::skse::log::LogType::Both($crate::skse::log::MB_ICONERROR),
             $crate::core::file!(),
             $crate::core::line!(),
             $crate::core::format_args!($($arg)*)
         );
-    };
+    }};
 }
