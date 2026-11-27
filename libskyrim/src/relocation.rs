@@ -2192,7 +2192,8 @@ macro_rules! relocation_variable {
 
 #[macro_export]
 macro_rules! relocation_func {
-    ( @no_inline $vis:vis fn $name:ident($($arg_name:ident: $arg_ty:ty),* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+    ( $(#[$attr:meta])* @no_inline $vis:vis fn $name:ident($($arg_name:ident: $arg_ty:ty),* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+        $(#[$attr])*
         $vis fn $name($($arg_name: $arg_ty),*) $(-> $ret)? {
             $crate::__abi_guard_nontrivial_handle_params!($($arg_ty),*);
             $crate::__abi_guard_nontrivial_handle_return!($($ret)?);
@@ -2200,8 +2201,9 @@ macro_rules! relocation_func {
         }
     };
 
-    ( $vis:vis fn $name:ident($($arg_name:ident: $arg_ty:ty),* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+    ( $(#[$attr:meta])* $vis:vis fn $name:ident($($arg_name:ident: $arg_ty:ty),* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
         #[inline]
+        $(#[$attr])*
         $vis fn $name($($arg_name: $arg_ty),*) $(-> $ret)? {
             $crate::__abi_guard_nontrivial_handle_params!($($arg_ty),*);
             $crate::__abi_guard_nontrivial_handle_return!($($ret)?);
@@ -2209,7 +2211,8 @@ macro_rules! relocation_func {
         }
     };
 
-    ( @no_inline $vis:vis fn $name:ident(&self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+    ( $(#[$attr:meta])* @no_inline $vis:vis fn $name:ident(&self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+        $(#[$attr])*
         $vis fn $name(&self $(, $arg_name: $arg_ty)*) $(-> $ret)? {
             $crate::__abi_guard_nontrivial_handle_params!($($arg_ty),*);
             $crate::__abi_guard_nontrivial_handle_return!($($ret)?);
@@ -2217,8 +2220,9 @@ macro_rules! relocation_func {
         }
     };
 
-    ( $vis:vis fn $name:ident(&self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+    ( $(#[$attr:meta])* $vis:vis fn $name:ident(&self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
         #[inline]
+        $(#[$attr])*
         $vis fn $name(&self $(, $arg_name: $arg_ty)*) $(-> $ret)? {
             $crate::__abi_guard_nontrivial_handle_params!($($arg_ty),*);
             $crate::__abi_guard_nontrivial_handle_return!($($ret)?);
@@ -2226,7 +2230,8 @@ macro_rules! relocation_func {
         }
     };
 
-    ( @no_inline $vis:vis fn $name:ident(&mut self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+    ( $(#[$attr:meta])* @no_inline $vis:vis fn $name:ident(&mut self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+        $(#[$attr])*
         $vis fn $name(&mut self $(, $arg_name: $arg_ty)*) $(-> $ret)? {
             $crate::__abi_guard_nontrivial_handle_params!($($arg_ty),*);
             $crate::__abi_guard_nontrivial_handle_return!($($ret)?);
@@ -2234,8 +2239,9 @@ macro_rules! relocation_func {
         }
     };
 
-    ( $vis:vis fn $name:ident(&mut self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
+    ( $(#[$attr:meta])* $vis:vis fn $name:ident(&mut self $(, $arg_name:ident: $arg_ty:ty)* $(,)?) $(-> $ret:ty)? => $id:expr ) => {
         #[inline]
+        $(#[$attr])*
         $vis fn $name(&mut self $(, $arg_name: $arg_ty)*) $(-> $ret)? {
             $crate::__abi_guard_nontrivial_handle_params!($($arg_ty),*);
             $crate::__abi_guard_nontrivial_handle_return!($($ret)?);

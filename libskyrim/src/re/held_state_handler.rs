@@ -4,6 +4,7 @@ use crate::offsets::offsets_rtti::RTTI_HeldStateHandler;
 use crate::offsets::offsets_vtable::VTABLE_HeldStateHandler;
 use crate::re::{ButtonEvent, PlayerInputHandler};
 use crate::relocation::{RttiType, VariantID, VariantOffset};
+use crate::version::RUNTIME_SSE_1_7_99;
 
 #[repr(C)]
 pub struct HeldStateHandlerData {
@@ -35,7 +36,9 @@ inherit!(HeldStateHandler : PlayerInputHandler, base);
 impl HeldStateHandler {
     pub const RTTI: VariantID = RTTI_HeldStateHandler;
     pub const VTABLE: &'static [VariantID] = &VTABLE_HeldStateHandler;
-    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x10, 0x10, 0x28);
+    /// `heldStateActive` lives at `0x10` on every runtime. VR appends `0x48`
+    /// unused bytes after the data (`sizeof == 0x60`).
+    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x10, 0x10, 0x10);
 
     crate::runtime_data_accessor! {
         pub fn data() -> HeldStateHandlerData {
@@ -49,14 +52,46 @@ impl HeldStateHandler {
         }
     }
 
-    crate::virtual_method! {
-        pub const VFUNC_UPDATE_HELD_STATE_ACTIVE: usize = 0x05;
-        pub fn update_held_state_active(event: *const ButtonEvent)
+    /// Runtime vtable slot of `UpdateHeldStateActive` (`05`, `07` on 1.7.99+ / VR).
+    #[inline(always)]
+    pub fn vfunc_update_held_state_active() -> usize {
+        crate::runtime::version_shift_vr(
+            0x05,
+            PlayerInputHandler::AE1799_ADDED_VFUNC_COUNT,
+            RUNTIME_SSE_1_7_99,
+            0x07,
+        )
     }
 
-    crate::virtual_method! {
-        pub const VFUNC_SET_HELD_STATE_ACTIVE: usize = 0x06;
-        pub fn set_held_state_active(flag: bool)
+    /// Runtime vtable slot of `SetHeldStateActive` (`06`, `08` on 1.7.99+ / VR).
+    #[inline(always)]
+    pub fn vfunc_set_held_state_active() -> usize {
+        crate::runtime::version_shift_vr(
+            0x06,
+            PlayerInputHandler::AE1799_ADDED_VFUNC_COUNT,
+            RUNTIME_SSE_1_7_99,
+            0x08,
+        )
+    }
+
+    #[inline(always)]
+    pub fn update_held_state_active(&mut self, event: *const ButtonEvent) {
+        crate::relocate_virtual!(
+            extern "C" fn(*mut Self, *const ButtonEvent),
+            self as *mut Self,
+            Self::vfunc_update_held_state_active(),
+            event
+        )
+    }
+
+    #[inline(always)]
+    pub fn set_held_state_active(&mut self, flag: bool) {
+        crate::relocate_virtual!(
+            extern "C" fn(*mut Self, bool),
+            self as *mut Self,
+            Self::vfunc_set_held_state_active(),
+            flag
+        )
     }
 }
 

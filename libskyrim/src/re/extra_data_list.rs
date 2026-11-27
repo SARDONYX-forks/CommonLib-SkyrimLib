@@ -340,6 +340,30 @@ impl ExtraDataList {
         removed
     }
 
+    /// Runtime object size: `0x18` on SE / VR / AE < 1.6.629, `0x20` on AE
+    /// 1.6.629+ (virtual `~BaseExtraList` adds a vtable pointer).
+    #[inline(always)]
+    pub fn runtime_size() -> usize {
+        crate::runtime::relocate_versioned_all(RUNTIME_SSE_1_6_629, 0x18, 0x20, 0x18)
+    }
+
+    crate::relocation_func! {
+        fn init_impl(this: *mut ExtraDataList) -> *mut ExtraDataList => RelocationID::new(11437, 11583)
+    }
+
+    /// Allocates an empty `ExtraDataList` on the engine heap and runs the
+    /// engine constructor (`InitExtraDataList`, the routine plugins such as
+    /// iEquip use). Returns null on allocation failure.
+    pub fn create() -> *mut ExtraDataList {
+        let size = Self::runtime_size();
+        let mem = unsafe { crate::ffi::commonlib_malloc(size) }.cast::<ExtraDataList>();
+        if mem.is_null() {
+            return mem;
+        }
+        unsafe { core::ptr::write_bytes(mem.cast::<u8>(), 0, size) };
+        Self::init_impl(mem)
+    }
+
     crate::relocation_func! {
         pub fn add(&mut self, to_add: *mut BSExtraData) -> *mut BSExtraData => RelocationID::new(12176, 12315)
     }

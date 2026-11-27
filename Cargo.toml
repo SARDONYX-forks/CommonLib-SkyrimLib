@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["core-util", "cstd", "libskyrim", "libskyrim-macros"]
+members = ["core-util", "cstd", "libskyrim", "libskyrim-macros", "rex_com"]
 
 [profile.release]
 panic = "abort"

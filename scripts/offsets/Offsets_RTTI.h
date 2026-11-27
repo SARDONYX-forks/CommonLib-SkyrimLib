@@ -2232,7 +2232,7 @@ namespace RE
 	constexpr REL::VariantID RTTI_BGSSaveLoadManager__Thread(686610, 394453, 0x1f02280);
 	constexpr REL::VariantID RTTI_BGSSaveLoadManager(686602, 394445, 0x1f02078);
 	constexpr REL::VariantID RTTI_BSTEventSource_BGSSaveLoadManagerEvent_(686605, 394448, 0x1f02130);
-	constexpr REL::VariantID RTTI___LoadGameMissingContentCallBack(686614, 394457, 0x1f02440);
+	constexpr REL::VariantID RTTI___LoadGameMissingContentCallBack(686614, 502590, 0x1f02440);
 	constexpr REL::VariantID RTTI_NiTMapBase_DFALL_NiTMapItem_ENUM_FORM_ID_BSSimpleList_SavedFormData________ENUM_FORM_ID_BSSimpleList_SavedFormData______(686617, 394460, 0x1f02520);
 	constexpr REL::VariantID RTTI_NiTMap_ENUM_FORM_ID_BSSimpleList_SavedFormData______(686616, 394459, 0x1f024c0);
 	constexpr REL::VariantID RTTI_BGSSaveLoadStatsMap(686615, 394458, 0x1f02488);
@@ -2678,6 +2678,10 @@ namespace RE
 	constexpr REL::VariantID RTTI_MovementHandler(687051, 394900, 0x1f0b4e8);
 	constexpr REL::VariantID RTTI_SprintHandler(687053, 394902, 0x1f0b538);
 	constexpr REL::VariantID RTTI_AttackBlockHandler(687060, 394909, 0x1f0b658);
+	// AE 1.7.99-only classes -- no SE/VR counterpart exists, so those slots are unused (0).
+	constexpr REL::VariantID RTTI_AmiiboEvent(0, 564083, 0);
+	constexpr REL::VariantID RTTI_MotionGestureEvent(0, 564082, 0);
+	constexpr REL::VariantID RTTI_SixaxisEvent(0, 564068, 0);
 	constexpr REL::VariantID RTTI_ReadyWeaponHandler(687054, 394903, 0x1f0b560);
 	constexpr REL::VariantID RTTI_ActivateHandler(687057, 394906, 0x1f0b5e0);
 	constexpr REL::VariantID RTTI_AutoMoveHandler(687055, 394904, 0x1f0b590);

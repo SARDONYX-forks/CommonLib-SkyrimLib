@@ -25,7 +25,6 @@ use crate::re::bs_fixed_string::BSFixedString;
 use crate::re::form::Form;
 use crate::re::form::FormGroup;
 use crate::re::inventory_entry_data::InventoryEntryData;
-use crate::re::ivirtual_machine::IVirtualMachine;
 use crate::re::ni_t_pointer_map::NiTPointerMap;
 use crate::re::tes_bound_object::TESBoundObject;
 use crate::re::tes_data_handler::TESDataHandler;
@@ -128,16 +127,6 @@ pub struct TESFileContainer {
 const _: () = assert!(core::mem::size_of::<TESFileContainer>() == 0x8);
 const _: () = assert!(core::mem::offset_of!(TESFileContainer, array) == 0x0);
 
-// Minimal `RE::SkyrimVM` prefix needed to reach `impl` at 0x200.
-#[repr(C)]
-struct SkyrimVMPrefix {
-    pad00: [u8; 0x200],
-    impl_: *mut IVirtualMachine,
-}
-
-const _: () = assert!(core::mem::size_of::<SkyrimVMPrefix>() == 0x208);
-const _: () = assert!(core::mem::offset_of!(SkyrimVMPrefix, impl_) == 0x200);
-
 /// C++ `RE::TESForm`
 #[repr(C)]
 pub struct TESForm {
@@ -227,7 +216,7 @@ impl TESForm {
 
     // RELOCATION_ID SE: 514315, AE: 400475
     crate::relocation_variable! {
-        fn skyrim_vm_singleton_ptr() -> &'static *mut SkyrimVMPrefix => RelocationID::new(514315, 400475)
+        fn skyrim_vm_singleton_ptr() -> &'static *mut crate::re::SkyrimVM => RelocationID::new(514315, 400475)
     }
 
     // РІвЂќР‚РІвЂќР‚РІвЂќР‚ Virtual Methods РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
@@ -772,7 +761,7 @@ impl TESForm {
             return false;
         }
 
-        let vm = unsafe { (*skyrim_vm).impl_ };
+        let vm = unsafe { (*skyrim_vm).get_virtual_machine() };
         if vm.is_null() {
             return false;
         }

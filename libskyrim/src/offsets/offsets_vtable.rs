@@ -6235,7 +6235,7 @@ pub const VTABLE_BGSSaveLoadManager: [VariantID; 3] = [
 ];
 
 pub const VTABLE___LoadGameMissingContentCallBack: [VariantID; 1] =
-    [VariantID::new(258783, 206638, 0x16bd138)];
+    [VariantID::new(258783, 465335, 0x16bd138)];
 
 pub const VTABLE_bgs__saveload__Request: [VariantID; 1] =
     [VariantID::new(258818, 206668, 0x16bd670)];
@@ -7441,6 +7441,12 @@ pub const VTABLE_MovementHandler: [VariantID; 1] = [VariantID::new(263056, 20871
 pub const VTABLE_SprintHandler: [VariantID; 1] = [VariantID::new(263057, 208717, 0x16f2208)];
 
 pub const VTABLE_AttackBlockHandler: [VariantID; 1] = [VariantID::new(263058, 208719, 0x16f2258)];
+
+pub const VTABLE_AmiiboEvent: [VariantID; 1] = [VariantID::new(0, 536708, 0)];
+
+pub const VTABLE_MotionGestureEvent: [VariantID; 1] = [VariantID::new(0, 536706, 0)];
+
+pub const VTABLE_SixaxisEvent: [VariantID; 1] = [VariantID::new(0, 536598, 0)];
 
 pub const VTABLE_ReadyWeaponHandler: [VariantID; 1] = [VariantID::new(263059, 208721, 0x16f22a8)];
 

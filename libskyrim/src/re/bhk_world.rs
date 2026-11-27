@@ -87,10 +87,43 @@ impl AsMut<bhkWorld> for bhkWorld {
     }
 }
 
+/// C++ `RE::bhkWorld::AE1799_RUNTIME_DATA` (at `0xC5D8`).
+#[repr(C)]
+pub struct bhkWorldAe1799RuntimeData {
+    pub unk_c5d8: u64, // C5D8
+    // TODO: `bhkWorldCinfo` (0x100 bytes, derives `hkpWorldCinfo`) is not
+    // translated yet; kept as raw bytes until `re/bhk_world_cinfo.rs` exists.
+    pub world_cinfo: [u8; 0x100], // C5E0
+    pub unk_c6e0: u32,            // C6E0
+    pub unk_c6e4: u32,            // C6E4
+    pub unk_c6e8: u32,            // C6E8
+    pub unk_c6ec: u32,            // C6EC
+    pub unk_c6f0: u32,            // C6F0
+    pub unk_c6f4: u32,            // C6F4
+    pub tau: f32,                 // C6F8
+    pub damping: f32,             // C6FC
+    pub pad_c700: [u8; 0x10],     // C700
+}
+
+const _: () = assert!(core::mem::offset_of!(bhkWorldAe1799RuntimeData, tau) == 0x120);
+
 impl bhkWorld {
     pub const RTTI: VariantID = RTTI_bhkWorld;
     pub const NI_RTTI: VariantID = NiRTTI_bhkWorld;
     pub const VTABLE: &'static [VariantID] = &VTABLE_bhkWorld;
+
+    // AE 1.7.99+ only: `None` on SE, AE < 1.7.99 and VR.
+    crate::runtime_optional_data_accessor! {
+        pub fn ae1799_runtime_data() -> bhkWorldAe1799RuntimeData {
+            version: crate::version::RUNTIME_SSE_1_7_99, se: 0, ae: 0xC5D8, vr: 0
+        }
+    }
+
+    crate::runtime_optional_data_mut_accessor! {
+        pub fn ae1799_runtime_data_mut() -> bhkWorldAe1799RuntimeData {
+            version: crate::version::RUNTIME_SSE_1_7_99, se: 0, ae: 0xC5D8, vr: 0
+        }
+    }
 
     crate::virtual_method! {
         pub const VFUNC_UNK_32: usize = 0x32;

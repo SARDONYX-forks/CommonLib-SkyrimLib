@@ -5,7 +5,8 @@ use core_util::{Enum, EnumSet};
 use crate::offsets::offsets_rtti::RTTI_InputEvent;
 use crate::offsets::offsets_vtable::VTABLE_InputEvent;
 use crate::re::{
-    BSFixedString, ButtonEvent, CharEvent, IDEvent, INPUT_DEVICE, MouseMoveEvent, ThumbstickEvent,
+    AmiiboEvent, BSFixedString, ButtonEvent, CharEvent, IDEvent, INPUT_DEVICE, MotionGestureEvent,
+    MouseMoveEvent, SixaxisEvent, ThumbstickEvent,
 };
 use crate::relocation::{RttiType, VariantID};
 
@@ -20,6 +21,20 @@ pub enum INPUT_EVENT_TYPE {
     kThumbstick = 3,
     kDeviceConnect = 4,
     kKinect = 5,
+    /// VR only: `VrWandTouchpadPositionEvent`. Same value as [`Self::kSixaxis`] on AE 1.7.99+.
+    kVrTouchpadPosition = 6,
+    /// VR only: `VrWandTouchpadSwipeEvent`. Same value as [`Self::kMotionGesture`] on AE 1.7.99+.
+    kVrTouchpadSwipe = 7,
+    /// AE 1.7.99+ only: `AmiiboEvent`.
+    kAmiibo = 8,
+}
+
+#[allow(non_upper_case_globals)]
+impl INPUT_EVENT_TYPE {
+    /// AE 1.7.99+ only: `SixaxisEvent` (shares its value with the VR touchpad pair).
+    pub const kSixaxis: Self = Self::kVrTouchpadPosition;
+    /// AE 1.7.99+ only: `MotionGestureEvent` (shares its value with the VR touchpad pair).
+    pub const kMotionGesture: Self = Self::kVrTouchpadSwipe;
 }
 
 /// C++ `RE::InputEvent`
@@ -130,6 +145,55 @@ impl InputEvent {
     #[inline(always)]
     pub fn as_mouse_move_event_mut(&mut self) -> Option<&mut MouseMoveEvent> {
         (self.try_get_event_type() == Some(INPUT_EVENT_TYPE::kMouseMove))
+            .then(|| unsafe { &mut *(self as *mut Self).cast() })
+    }
+
+    #[inline(always)]
+    fn is_ae1799_event_type(&self, ty: INPUT_EVENT_TYPE) -> bool {
+        !crate::runtime::is_vr()
+            && crate::runtime::is_at_least(crate::version::RUNTIME_SSE_1_7_99)
+            && self.try_get_event_type() == Some(ty)
+    }
+
+    /// AE 1.7.99+ only; `None` on every other runtime.
+    #[inline(always)]
+    pub fn as_amiibo_event(&self) -> Option<&AmiiboEvent> {
+        self.is_ae1799_event_type(INPUT_EVENT_TYPE::kAmiibo)
+            .then(|| unsafe { &*(self as *const Self).cast() })
+    }
+
+    /// AE 1.7.99+ only; `None` on every other runtime.
+    #[inline(always)]
+    pub fn as_amiibo_event_mut(&mut self) -> Option<&mut AmiiboEvent> {
+        self.is_ae1799_event_type(INPUT_EVENT_TYPE::kAmiibo)
+            .then(|| unsafe { &mut *(self as *mut Self).cast() })
+    }
+
+    /// AE 1.7.99+ only; `None` on every other runtime.
+    #[inline(always)]
+    pub fn as_motion_gesture_event(&self) -> Option<&MotionGestureEvent> {
+        self.is_ae1799_event_type(INPUT_EVENT_TYPE::kMotionGesture)
+            .then(|| unsafe { &*(self as *const Self).cast() })
+    }
+
+    /// AE 1.7.99+ only; `None` on every other runtime.
+    #[inline(always)]
+    pub fn as_motion_gesture_event_mut(&mut self) -> Option<&mut MotionGestureEvent> {
+        self.is_ae1799_event_type(INPUT_EVENT_TYPE::kMotionGesture)
+            .then(|| unsafe { &mut *(self as *mut Self).cast() })
+    }
+
+    /// AE 1.7.99+ only; `None` on every other runtime.
+    #[inline(always)]
+    pub fn as_sixaxis_event(&self) -> Option<&SixaxisEvent> {
+        self.is_ae1799_event_type(INPUT_EVENT_TYPE::kSixaxis)
+            .then(|| unsafe { &*(self as *const Self).cast() })
+    }
+
+    /// AE 1.7.99+ only; `None` on every other runtime.
+    #[inline(always)]
+    pub fn as_sixaxis_event_mut(&mut self) -> Option<&mut SixaxisEvent> {
+        self.is_ae1799_event_type(INPUT_EVENT_TYPE::kSixaxis)
             .then(|| unsafe { &mut *(self as *mut Self).cast() })
     }
 

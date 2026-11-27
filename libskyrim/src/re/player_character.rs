@@ -1060,7 +1060,31 @@ impl PlayerCharacter {
     pub const RTTI: VariantID = RTTI_PlayerCharacter;
     pub const VTABLE: &'static [VariantID] = &VTABLE_PlayerCharacter;
     pub const FORMTYPE: FormType = FormType::ActorCharacter;
-    pub const FULL_SIZE: VariantOffset = VariantOffset::new(0xBE0, 0xA08, 0x12F0);
+    /// Size before AE 1.7.99 (SE / AE / VR). AE 1.7.99+ adds `0x8`.
+    pub const FULL_SIZE: VariantOffset = VariantOffset::new(0xBE0, 0xBE8, 0x12D8);
+
+    /// AE 1.7.99 inserted a `BSTEventSink<BSSystemEvent>` base at `0x2D8`, which
+    /// shifts every later AE member by this many bytes.
+    pub const AE1799_SHIFT_BYTES: usize = 0x8;
+    /// First AE offset affected by [`Self::AE1799_SHIFT_BYTES`].
+    pub const AE1799_SHIFT_START: usize = 0x2D8;
+    /// `BSTEventSink<BSSystemEvent>` base, AE 1.7.99+ only.
+    pub const BS_SYSTEM_EVENT_SINK_OFFSET_AE1799: usize = 0x2D8;
+
+    /// Resolves an SE/AE/VR offset for the running game, applying the AE 1.7.99
+    /// base-class shift (C++ `REL::VersionShift(..., kAE1799ShiftBytes, 1.7.99)`).
+    #[inline(always)]
+    pub fn runtime_offset(offset: VariantOffset) -> usize {
+        let value = offset.offset();
+        if crate::runtime::is_ae()
+            && value >= Self::AE1799_SHIFT_START
+            && crate::runtime::is_at_least(crate::version::RUNTIME_SSE_1_7_99)
+        {
+            value + Self::AE1799_SHIFT_BYTES
+        } else {
+            value
+        }
+    }
 
     pub const MENU_OPEN_CLOSE_EVENT_SINK_OFFSET: VariantOffset =
         VariantOffset::new(0x2B0, 0x2B8, 0x2B0);
@@ -1142,7 +1166,78 @@ impl PlayerCharacter {
     }
 
     crate::relocation_func! {
-        pub fn add_skill_experience(&mut self, skill: ActorValue, experience: f32) => RelocationID::new(39413, 40488)
+        fn add_skill_experience_impl(
+            &mut self,
+            skill: ActorValue,
+            experience: f32,
+            advance_object: *mut TESForm,
+            advance_action: u32
+        ) => RelocationID::new(39413, 40488)
+    }
+
+    /// C++ `AddSkillExperience(skill, experience, advanceObject = nullptr, advanceAction = 0)`.
+    #[inline(always)]
+    pub fn add_skill_experience(&mut self, skill: ActorValue, experience: f32) {
+        self.add_skill_experience_impl(skill, experience, core::ptr::null_mut(), 0);
+    }
+
+    #[inline(always)]
+    pub fn add_skill_experience_ex(
+        &mut self,
+        skill: ActorValue,
+        experience: f32,
+        advance_object: *mut TESForm,
+        advance_action: u32,
+    ) {
+        self.add_skill_experience_impl(skill, experience, advance_object, advance_action);
+    }
+
+    crate::relocation_func! {
+        pub fn check_poison_weapon(&mut self, poison: *mut crate::re::AlchemyItem) => RelocationID::new(39406, 40481)
+    }
+
+    crate::relocation_func! {
+        pub fn use_poison_from_inventory(&mut self, poison: *mut crate::re::AlchemyItem) => RelocationID::new(39406, 40481)
+    }
+
+    crate::relocation_func! {
+        pub fn destroy_mouse_springs_vr(&mut self, device: VR_DEVICE) => RelocationID::new(39480, 40557)
+    }
+
+    crate::relocation_func! {
+        fn set_waypoint_impl(&mut self, position: *const crate::re::NiPoint3, world_space_or_cell: *mut TESForm) => RelocationID::new(39458, 40535)
+    }
+
+    #[inline(always)]
+    pub fn set_waypoint(
+        &mut self,
+        position: &crate::re::NiPoint3,
+        world_space_or_cell: *mut TESForm,
+    ) {
+        self.set_waypoint_impl(position, world_space_or_cell);
+    }
+
+    crate::relocation_func! {
+        pub fn remove_waypoint(&mut self) => RelocationID::new(39459, 40536)
+    }
+
+    crate::relocation_func! {
+        // Does not check whether waiting is currently allowed (combat, etc.).
+        pub fn start_waiting(&mut self, hours: i32) => RelocationID::new(39344, 40415)
+    }
+
+    /// Per-frame VR comfort-radius check; no-op outside VR.
+    #[inline(always)]
+    pub fn update_vr_comfort_check(&mut self) {
+        if crate::runtime::is_vr() {
+            let func = unsafe {
+                crate::relocation::Relocation::<extern "C" fn(*mut Self)>::new(VariantID::new(
+                    0, 0, 0x6B9AA0,
+                ))
+                .get()
+            };
+            func(self);
+        }
     }
 
     crate::relocation_func! {
@@ -1269,279 +1364,289 @@ impl PlayerCharacter {
 }
 
 impl PlayerCharacter {
+    // C++ `AsBSSystemEventSink` (AE 1.7.99+ only).
+    crate::runtime_optional_data_accessor! {
+        pub fn as_bs_system_event_sink() -> BSTEventSink<crate::re::BSSystemEvent> {
+            version: crate::version::RUNTIME_SSE_1_7_99,
+            se: 0,
+            ae: Self::BS_SYSTEM_EVENT_SINK_OFFSET_AE1799,
+            vr: 0
+        }
+    }
+
     crate::runtime_cast_accessor! {
         pub fn as_bgs_actor_cell_event_source() -> BSTEventSource<BGSActorCellEvent> {
-            offset: Self::BGSACTOR_CELL_EVENT_SOURCE_OFFSET
+            offset: Self::runtime_offset(Self::BGSACTOR_CELL_EVENT_SOURCE_OFFSET)
         }
     }
 
     crate::runtime_cast_mut_accessor! {
         pub fn as_bgs_actor_cell_event_source_mut() -> BSTEventSource<BGSActorCellEvent> {
-            offset: Self::BGSACTOR_CELL_EVENT_SOURCE_OFFSET
+            offset: Self::runtime_offset(Self::BGSACTOR_CELL_EVENT_SOURCE_OFFSET)
         }
     }
 
     crate::runtime_cast_accessor! {
         pub fn as_bgs_actor_death_event_source() -> BSTEventSource<BGSActorDeathEvent> {
-            offset: Self::BGSACTOR_DEATH_EVENT_SOURCE_OFFSET
+            offset: Self::runtime_offset(Self::BGSACTOR_DEATH_EVENT_SOURCE_OFFSET)
         }
     }
 
     crate::runtime_cast_mut_accessor! {
         pub fn as_bgs_actor_death_event_source_mut() -> BSTEventSource<BGSActorDeathEvent> {
-            offset: Self::BGSACTOR_DEATH_EVENT_SOURCE_OFFSET
+            offset: Self::runtime_offset(Self::BGSACTOR_DEATH_EVENT_SOURCE_OFFSET)
         }
     }
 
     crate::runtime_cast_accessor! {
         pub fn as_position_player_event_source() -> BSTEventSource<PositionPlayerEvent> {
-            offset: Self::POSITION_PLAYER_EVENT_SOURCE_OFFSET
+            offset: Self::runtime_offset(Self::POSITION_PLAYER_EVENT_SOURCE_OFFSET)
         }
     }
 
     crate::runtime_cast_mut_accessor! {
         pub fn as_position_player_event_source_mut() -> BSTEventSource<PositionPlayerEvent> {
-            offset: Self::POSITION_PLAYER_EVENT_SOURCE_OFFSET
+            offset: Self::runtime_offset(Self::POSITION_PLAYER_EVENT_SOURCE_OFFSET)
         }
     }
 
     crate::runtime_cast_accessor! {
         pub fn as_menu_open_close_event_sink() -> BSTEventSink<MenuOpenCloseEvent> {
-            offset: Self::MENU_OPEN_CLOSE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::MENU_OPEN_CLOSE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_cast_mut_accessor! {
         pub fn as_menu_open_close_event_sink_mut() -> BSTEventSink<MenuOpenCloseEvent> {
-            offset: Self::MENU_OPEN_CLOSE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::MENU_OPEN_CLOSE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_cast_accessor! {
         pub fn as_menu_mode_change_event_sink() -> BSTEventSink<MenuModeChangeEvent> {
-            offset: Self::MENU_MODE_CHANGE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::MENU_MODE_CHANGE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_cast_mut_accessor! {
         pub fn as_menu_mode_change_event_sink_mut() -> BSTEventSink<MenuModeChangeEvent> {
-            offset: Self::MENU_MODE_CHANGE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::MENU_MODE_CHANGE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_cast_accessor! {
         pub fn as_user_event_enabled_event_sink() -> BSTEventSink<UserEventEnabledEvent> {
-            offset: Self::USER_EVENT_ENABLED_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::USER_EVENT_ENABLED_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_cast_mut_accessor! {
         pub fn as_user_event_enabled_event_sink_mut() -> BSTEventSink<UserEventEnabledEvent> {
-            offset: Self::USER_EVENT_ENABLED_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::USER_EVENT_ENABLED_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_cast_accessor! {
         pub fn as_tes_tracked_stats_event_sink() -> BSTEventSink<TESTrackedStatsEvent> {
-            offset: Self::TES_TRACKED_STATS_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::TES_TRACKED_STATS_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_cast_mut_accessor! {
         pub fn as_tes_tracked_stats_event_sink_mut() -> BSTEventSink<TESTrackedStatsEvent> {
-            offset: Self::TES_TRACKED_STATS_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::TES_TRACKED_STATS_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_optional_data_accessor! {
         pub fn as_vr_overlay_change_event_sink() -> BSTEventSink<VROverlayChange> {
-            offset: Self::VR_OVERLAY_CHANGE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::VR_OVERLAY_CHANGE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_optional_data_mut_accessor! {
         pub fn as_vr_overlay_change_event_sink_mut() -> BSTEventSink<VROverlayChange> {
-            offset: Self::VR_OVERLAY_CHANGE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::VR_OVERLAY_CHANGE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_optional_data_accessor! {
         pub fn as_vr_device_connection_change_event_sink() -> BSTEventSink<VRDeviceConnectionChange> {
-            offset: Self::VR_DEVICE_CONNECTION_CHANGE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::VR_DEVICE_CONNECTION_CHANGE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_optional_data_mut_accessor! {
         pub fn as_vr_device_connection_change_event_sink_mut() -> BSTEventSink<VRDeviceConnectionChange> {
-            offset: Self::VR_DEVICE_CONNECTION_CHANGE_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::VR_DEVICE_CONNECTION_CHANGE_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_optional_data_accessor! {
         pub fn as_vr_reset_hmd_height_event_sink() -> BSTEventSink<VRResetHMDHeight> {
-            offset: Self::VR_RESET_HMD_HEIGHT_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::VR_RESET_HMD_HEIGHT_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_optional_data_mut_accessor! {
         pub fn as_vr_reset_hmd_height_event_sink_mut() -> BSTEventSink<VRResetHMDHeight> {
-            offset: Self::VR_RESET_HMD_HEIGHT_EVENT_SINK_OFFSET
+            offset: Self::runtime_offset(Self::VR_RESET_HMD_HEIGHT_EVENT_SINK_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_runtime_data_flat_impl() -> PLAYER_RUNTIME_DATA {
-            offset: Self::PLAYER_RUNTIME_DATA_FLAT_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_DATA_FLAT_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_runtime_data_flat_impl_mut() -> PLAYER_RUNTIME_DATA {
-            offset: Self::PLAYER_RUNTIME_DATA_FLAT_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_DATA_FLAT_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_runtime_target_loc_data_impl() -> PLAYER_RUNTIME_TARGET_LOC_DATA {
-            offset: Self::PLAYER_RUNTIME_TARGET_LOC_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_TARGET_LOC_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_runtime_target_loc_data_impl_mut() -> PLAYER_RUNTIME_TARGET_LOC_DATA {
-            offset: Self::PLAYER_RUNTIME_TARGET_LOC_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_TARGET_LOC_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn queued_target_loc_flat_impl() -> PLAYER_TARGET_LOC {
-            offset: Self::QUEUED_TARGET_LOC_FLAT_OFFSET
+            offset: Self::runtime_offset(Self::QUEUED_TARGET_LOC_FLAT_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn queued_target_loc_flat_impl_mut() -> PLAYER_TARGET_LOC {
-            offset: Self::QUEUED_TARGET_LOC_FLAT_OFFSET
+            offset: Self::runtime_offset(Self::QUEUED_TARGET_LOC_FLAT_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_runtime_location_state_data_impl() -> PLAYER_RUNTIME_LOCATION_STATE_DATA {
-            offset: Self::PLAYER_RUNTIME_LOCATION_STATE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_LOCATION_STATE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_runtime_location_state_data_impl_mut() -> PLAYER_RUNTIME_LOCATION_STATE_DATA {
-            offset: Self::PLAYER_RUNTIME_LOCATION_STATE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_LOCATION_STATE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_runtime_advance_data_impl() -> PLAYER_RUNTIME_ADVANCE_DATA {
-            offset: Self::PLAYER_RUNTIME_ADVANCE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_ADVANCE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_runtime_advance_data_impl_mut() -> PLAYER_RUNTIME_ADVANCE_DATA {
-            offset: Self::PLAYER_RUNTIME_ADVANCE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_ADVANCE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_runtime_tint_race_data_impl() -> PLAYER_RUNTIME_TINT_RACE_DATA {
-            offset: Self::PLAYER_RUNTIME_TINT_RACE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_TINT_RACE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_runtime_tint_race_data_impl_mut() -> PLAYER_RUNTIME_TINT_RACE_DATA {
-            offset: Self::PLAYER_RUNTIME_TINT_RACE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_TINT_RACE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_runtime_world_data_impl() -> PLAYER_RUNTIME_WORLD_DATA {
-            offset: Self::PLAYER_RUNTIME_WORLD_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_WORLD_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_runtime_world_data_impl_mut() -> PLAYER_RUNTIME_WORLD_DATA {
-            offset: Self::PLAYER_RUNTIME_WORLD_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_WORLD_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_runtime_interaction_data_impl() -> PLAYER_RUNTIME_INTERACTION_DATA {
-            offset: Self::PLAYER_RUNTIME_INTERACTION_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_INTERACTION_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_runtime_interaction_data_impl_mut() -> PLAYER_RUNTIME_INTERACTION_DATA {
-            offset: Self::PLAYER_RUNTIME_INTERACTION_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_RUNTIME_INTERACTION_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn grab_data_flat_impl() -> GrabData {
-            offset: Self::GRAB_DATA_FLAT_OFFSET
+            offset: Self::runtime_offset(Self::GRAB_DATA_FLAT_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn grab_data_flat_impl_mut() -> GrabData {
-            offset: Self::GRAB_DATA_FLAT_OFFSET
+            offset: Self::runtime_offset(Self::GRAB_DATA_FLAT_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_info_runtime_head_data_impl() -> PLAYER_INFO_RUNTIME_HEAD_DATA {
-            offset: Self::PLAYER_INFO_RUNTIME_HEAD_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_INFO_RUNTIME_HEAD_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_info_runtime_head_data_impl_mut() -> PLAYER_INFO_RUNTIME_HEAD_DATA {
-            offset: Self::PLAYER_INFO_RUNTIME_HEAD_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_INFO_RUNTIME_HEAD_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn player_info_runtime_tail_data_impl() -> PLAYER_INFO_RUNTIME_TAIL_DATA {
-            offset: Self::PLAYER_INFO_RUNTIME_TAIL_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_INFO_RUNTIME_TAIL_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn player_info_runtime_tail_data_impl_mut() -> PLAYER_INFO_RUNTIME_TAIL_DATA {
-            offset: Self::PLAYER_INFO_RUNTIME_TAIL_DATA_OFFSET
+            offset: Self::runtime_offset(Self::PLAYER_INFO_RUNTIME_TAIL_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn race_data_impl() -> PlayerCharacterRaceData {
-            offset: Self::RACE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::RACE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn race_data_impl_mut() -> PlayerCharacterRaceData {
-            offset: Self::RACE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::RACE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_accessor! {
         fn game_state_data_impl() -> GameStateData {
-            offset: Self::GAME_STATE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::GAME_STATE_DATA_OFFSET)
         }
     }
 
     crate::runtime_data_mut_accessor! {
         fn game_state_data_impl_mut() -> GameStateData {
-            offset: Self::GAME_STATE_DATA_OFFSET
+            offset: Self::runtime_offset(Self::GAME_STATE_DATA_OFFSET)
         }
     }
 

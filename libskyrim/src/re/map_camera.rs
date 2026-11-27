@@ -59,14 +59,20 @@ pub struct MapCameraStatesTransition {
     pub zoom_destination: NiPoint3,
     pub unk58: u32,
     pub unk5c: u32,
-    pub zoom_origin: NiPoint3,
-    pub pad6c: u32,
+    pub unk60: f32, // 60
+    pub unk64: f32, // 64
+    // Three ref-counted pointers (assigned with the BSTSmartPointer load/store
+    // pair by the ctor); pointee types are not yet identified.
+    pub unk68: *mut core::ffi::c_void, // 68
+    pub unk70: *mut core::ffi::c_void, // 70
+    pub unk78: *mut core::ffi::c_void, // 78
+    pub unk80: u64,                    // 80
 }
 
-const _: () = assert!(core::mem::size_of::<MapCameraStatesTransition>() == 0x70);
+const _: () = assert!(core::mem::size_of::<MapCameraStatesTransition>() == 0x88);
 const _: () = assert!(core::mem::offset_of!(MapCameraStatesTransition, current_position) == 0x40);
 const _: () = assert!(core::mem::offset_of!(MapCameraStatesTransition, zoom_destination) == 0x4C);
-const _: () = assert!(core::mem::offset_of!(MapCameraStatesTransition, zoom_origin) == 0x60);
+const _: () = assert!(core::mem::offset_of!(MapCameraStatesTransition, unk68) == 0x68);
 
 impl RttiType for MapCameraStatesTransition {
     const RTTI: VariantID = RTTI_MapCameraStates__Transition;
@@ -116,9 +122,11 @@ pub struct MapCameraStatesWorld {
     pub unk60: u32,
     pub unk64: u32,
     pub map_data: *mut MapCameraStatesWorldMapData,
+    pub unk70: bool,    // 70
+    pub pad71: [u8; 7], // 71
 }
 
-const _: () = assert!(core::mem::size_of::<MapCameraStatesWorld>() == 0x70);
+const _: () = assert!(core::mem::size_of::<MapCameraStatesWorld>() == 0x78);
 const _: () = assert!(core::mem::offset_of!(MapCameraStatesWorld, current_position) == 0x20);
 const _: () =
     assert!(core::mem::offset_of!(MapCameraStatesWorld, current_position_scroll_offset) == 0x2C);

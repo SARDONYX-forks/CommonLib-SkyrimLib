@@ -337,7 +337,7 @@ impl InventoryEntryData {
     }
 
     crate::relocation_func! {
-        pub fn set_worn(&mut self, worn: bool, left: bool, delete_extra_list: bool) => RelocationID::new(16027, 15789)
+        pub fn set_worn(&mut self, worn: bool, left: bool, delete_extra_list: bool) => RelocationID::new(15789, 16027)
     }
 
     crate::relocation_func! {

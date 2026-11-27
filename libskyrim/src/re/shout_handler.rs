@@ -32,7 +32,7 @@ inherit!(ShoutHandler : PlayerInputHandler, base);
 impl ShoutHandler {
     pub const RTTI: VariantID = RTTI_ShoutHandler;
     pub const VTABLE: &'static [VariantID] = &VTABLE_ShoutHandler;
-    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x10, 0x10, 0x28);
+    pub const DATA_OFFSET: VariantOffset = VariantOffset::new(0x10, 0x10, 0x10);
 
     crate::runtime_data_accessor! {
         pub fn data() -> ShoutHandlerData {

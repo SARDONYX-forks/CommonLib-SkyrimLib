@@ -320,8 +320,16 @@ unsafe impl<const N: usize> BSTArrayAllocator for BSTSmallArrayHeapAllocator<N> 
             // Switched to heap mode
             self.set_local(false);
             self._data = SmallArrayData { heap: data };
+        } else {
+            // CommonLib #547: (re-)enter local mode, pulling the elements into the
+            // inline buffer when they were handed over from elsewhere (e.g. when
+            // shrinking back from the heap).
+            self.set_local(true);
+            let local = unsafe { self._data.local.as_mut_ptr() };
+            if !data.is_null() && data != local {
+                unsafe { ptr::copy(data, local, (capacity as usize) * elem_size) };
+            }
         }
-        // If fits in local, keep local flag set (data is already in local buffer)
     }
 }
 

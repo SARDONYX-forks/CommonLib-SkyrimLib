@@ -70,7 +70,7 @@ Check all of these:
   and call `relocate_virtual!` only in the forwarding branch
 - if a source-backed method returns or accepts a non-trivial handle type by
   value, do not preserve that raw ABI shape in a Rust macro signature; use an
-  out-param wrapper or a C++ bridge and keep any ergonomic return-by-value API
+  out-param wrapper in `libskyrim/src/ffi/` and keep any ergonomic return-by-value API
   only above that boundary
 
 ## Layout Rules

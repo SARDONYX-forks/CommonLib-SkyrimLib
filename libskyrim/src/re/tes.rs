@@ -43,54 +43,52 @@ impl TESSystemEventAdapter {
     // BSEventNotifyControl ProcessEvent(...) override;  // 01
 }
 
+/// C++ `RE::TES::ParticleObjectCache`
+#[repr(C)]
+pub struct TESParticleObjectCache {
+    pub model: crate::re::NiPointer<crate::re::NiAVObject>, // 00
+    pub clones: crate::re::NiPointer<crate::re::NiAVObject>, // 08
+    pub next: *mut TESParticleObjectCache,                  // 10
+}
+
+const _: () = assert!(core::mem::size_of::<TESParticleObjectCache>() == 0x18);
+
 /// C++ `RE::TES::RUNTIME_DATA`
 #[repr(C)]
 pub struct TESRuntimeData {
-    pub unk128: u8,                // 00
-    pub show_land_borders: bool,   // 01
-    pub unk12a: u8,                // 02
-    pub unk12b: u8,                // 03
-    pub unk12c: u8,                // 04
-    pub unk12d: u8,                // 05
-    pub unk12e: u8,                // 06
-    pub unk12f: u8,                // 07
-    pub unk130: u16,               // 08
-    pub unk132: u8,                // 0A
-    pub unk133: u8,                // 0B
-    pub unk134: bool,              // 0C
-    pub unk135: bool,              // 0D
-    pub unk136: bool,              // 0E
-    pub running_cell_tests: bool,  // 0F
-    pub running_cell_tests2: bool, // 10
-    pub unk139: bool,              // 11
-    pub unk13a: bool,              // 12
-    pub unk13b: bool,              // 13
-    pub allow_unused_purge: bool,  // 14
-    pub pad15: [u8; 3],            // 15
+    pub unk128: u8,                  // 00
+    pub show_land_borders: bool,     // 01
+    pub unk12a: u8,                  // 02
+    pub unk12b: u8,                  // 03
+    pub unk12c: u8,                  // 04
+    pub unk12d: u8,                  // 05
+    pub unk12e: u8,                  // 06
+    pub unk12f: u8,                  // 07
+    pub unk130: u16,                 // 08
+    pub unk132: u8,                  // 0A
+    pub unk133: u8,                  // 0B
+    pub grid_buffer_distance_x: f32, // 0C (134)
+    pub grid_buffer_distance_y: f32, // 10 (138)
+    pub allow_unused_purge: bool,    // 14 (13C)
+    pub pad15: [u8; 3],              // 15
 }
 
 const _: () = assert!(core::mem::size_of::<TESRuntimeData>() == 0x18);
 const _: () = assert!(core::mem::offset_of!(TESRuntimeData, show_land_borders) == 0x01);
-const _: () = assert!(core::mem::offset_of!(TESRuntimeData, running_cell_tests) == 0x0F);
+const _: () = assert!(core::mem::offset_of!(TESRuntimeData, grid_buffer_distance_x) == 0x0C);
 const _: () = assert!(core::mem::offset_of!(TESRuntimeData, allow_unused_purge) == 0x14);
 
 /// C++ `RE::TES::AE_RUNTIME_DATA`
 #[repr(C)]
 pub struct TESAERuntimeData {
-    pub unk128: u32,               // 00
-    pub land_border_mode: u32,     // 04
-    pub border_color_agbr: u32,    // 08
-    pub unk134: bool,              // 0C
-    pub unk135: bool,              // 0D
-    pub unk136: bool,              // 0E
-    pub running_cell_tests: bool,  // 0F
-    pub running_cell_tests2: bool, // 10
-    pub unk139: bool,              // 11
-    pub unk13a: bool,              // 12
-    pub unk13b: bool,              // 13
-    pub allow_unused_purge: bool,  // 14
-    pub pad15: [u8; 3],            // 15
-    pub unk140: u64,               // 18
+    pub unk128: u32,                 // 00
+    pub land_border_mode: u32,       // 04
+    pub border_color_agbr: u32,      // 08
+    pub grid_buffer_distance_x: f32, // 0C (134)
+    pub grid_buffer_distance_y: f32, // 10 (138)
+    pub allow_unused_purge: bool,    // 14 (13C)
+    pub pad15: [u8; 3],              // 15
+    pub unk140: u64,                 // 18
 }
 
 const _: () = assert!(core::mem::size_of::<TESAERuntimeData>() == 0x20);
@@ -104,52 +102,59 @@ const _: () = assert!(core::mem::offset_of!(TESAERuntimeData, unk140) == 0x18);
 pub struct TESRuntimeData2 {
     pub world_space: *mut TESWorldSpace, // 00
     pub dead_count: BSSimpleList<*mut BSTTuple<*mut TESNPC, u16>>, // 08
-    // TODO: SOURCE - replace these raw pointers with the concrete smart-pointer
-    // types once the pointees for `TES::RUNTIME_DATA2` offsets `0x18..0x30`
-    // are RE-confirmed; `RE/T/TES.h` only marks them as `void*` smart pointers.
-    pub unk158: *mut c_void,                         // 18
-    pub unk160: *mut c_void,                         // 20
-    pub unk168: *mut c_void,                         // 28
-    pub unk170: *mut c_void,                         // 30
-    pub unk178: u64,                                 // 38
-    pub unk180: u64,                                 // 40
-    pub unk188: u64,                                 // 48
-    pub unk190: u64,                                 // 50
-    pub unk198: u64,                                 // 58
-    pub unk1a0: u64,                                 // 60
-    pub unk1a8: u64,                                 // 68
-    pub unk1b0: u64,                                 // 70
-    pub unk1b8: u64,                                 // 78
-    pub unk1c0: u64,                                 // 80
-    pub unk1c8: u64,                                 // 88
-    pub unk1d0: u64,                                 // 90
-    pub unk1d8: u64,                                 // 98
-    pub unk1e0: u64,                                 // A0
-    pub unk1e8: u64,                                 // A8
-    pub unk1f0: u64,                                 // B0
-    pub unk1f8: u64,                                 // B8
-    pub unk200: u64,                                 // C0
-    pub unk208: u64,                                 // C8
-    pub unk210: u64,                                 // D0
-    pub unk218: u64,                                 // D8
-    pub unk220: u64,                                 // E0
-    pub player_character: *mut PlayerCharacter,      // E8
-    pub unk230: u64,                                 // F0
-    pub unk238: u64,                                 // F8
-    pub unk240: u64,                                 // 100
-    pub unk248: u64,                                 // 108
-    pub unk250: u64,                                 // 110
-    pub unk258: u64,                                 // 118
-    pub unk260: u64,                                 // 120
-    pub unk268: u64,                                 // 128
-    pub unk270: u64,                                 // 130
-    pub unk278: u64,                                 // 138
-    pub unk280: u64,                                 // 140
-    pub unk288: u64,                                 // 148
+    /// Ref-counted; queues facegen addon-node model/texture swaps.
+    pub queued_face_gen_addon_handle: *mut crate::re::QueuedFile, // 18 (158)
+    /// Lazily loaded `Effects\blooddecal.dds`.
+    pub blood_decal_texture: crate::re::NiPointer<crate::re::NiSourceTexture>, // 20 (160)
+    /// Ref-counted; purpose beyond the handle itself unresolved.
+    pub queued_form_data_handle: *mut crate::re::QueuedFile, // 28 (168)
+    /// Ref-counted; registers blood-spray/water-splash NIFs.
+    pub queued_blood_spray_water_splash_handle: *mut crate::re::QueuedFile, // 30 (170)
+    pub unk178: u64,                     // 38
+    pub unk180: u64,                     // 40
+    pub unk188: u64,                     // 48
+    pub unk190: u64,                     // 50
+    pub unk198: u64,                     // 58
+    pub unk1a0: u64,                     // 60
+    pub unk1a8: u64,                     // 68
+    pub unk1b0: u64,                     // 70
+    pub unk1b8: u64,                     // 78
+    pub unk1c0: u64,                     // 80
+    pub unk1c8: u64,                     // 88
+    pub unk1d0: u64,                     // 90
+    pub unk1d8: u64,                     // 98
+    pub unk1e0: u64,                     // A0
+    pub unk1e8: u64,                     // A8
+    pub unk1f0: u64,                     // B0
+    pub unk1f8: u64,                     // B8
+    pub unk200: u64,                     // C0
+    pub unk208: u64,                     // C8
+    pub unk210: u64,                     // D0
+    pub unk218: u64,                     // D8
+    pub unk220: u64,                     // E0
+    pub player_character: *mut PlayerCharacter, // E8
+    pub unk230: u64,                     // F0
+    pub unk238: u64,                     // F8
+    pub unk240: u64,                     // 100
+    pub unk248: u64,                     // 108
+    pub unk250: u64,                     // 110
+    pub unk258: u64,                     // 118
+    pub unk260: u64,                     // 120
+    pub unk268: u64,                     // 128
+    pub unk270: u64,                     // 130
+    pub unk278: u64,                     // 138
+    pub unk280: u64,                     // 140
+    /// Head of a callback-keyed clone/cache linked list.
+    pub particle_cache_head: *mut TESParticleObjectCache, // 148 (288)
     pub system_event_adapter: TESSystemEventAdapter, // 150
-    pub unk2a0: u64,                                 // 160
-    pub nav_mesh_info_map: *mut NavMeshInfoMap,      // 168
-    pub unk2b0: u64,                                 // 170
+    /// Incremented and decremented as a 32-bit value.
+    pub placeable_water_count: u32, // 160 (2A0)
+    pub pad2a4: u32,                     // 164
+    /// Lazily constructed on first access.
+    pub nav_mesh_info_map: *mut NavMeshInfoMap, // 168
+    // TODO: `LoadedAreaBound` is not translated; this is a ref-counted
+    // `NiPointer<LoadedAreaBound>` kept as a raw pointer until it is.
+    pub loaded_area_bound: *mut c_void, // 170 (2B0)
 }
 
 const _: () = assert!(core::mem::size_of::<TESRuntimeData2>() == 0x178);
@@ -300,8 +305,41 @@ impl TES {
         pub fn get_land_texture(&self, position: &NiPoint3) -> *mut TESLandTexture => RelocationID::new(13202, 13348)
     }
 
+    crate::relocation_variable! {
+        pub fn get_grids_to_load_copy() -> &'static mut i32 => RelocationID::new(527644, 414596)
+    }
+
     crate::relocation_func! {
-        pub fn get_water_height(&self, pos: &NiPoint3, cell: *mut TESObjectCELL) -> f32 => RelocationID::new(13212, 13358)
+        pub fn cancel_master_file_loads(&mut self) => RelocationID::new(13188, 13333)
+    }
+
+    crate::relocation_func! {
+        pub fn resume_master_file_loads(&mut self) => RelocationID::new(13189, 13334)
+    }
+
+    crate::relocation_func! {
+        fn set_current_cell_impl(
+            &mut self,
+            cell: *mut TESObjectCELL,
+            position: *const crate::re::NiPoint3,
+            unk4: f32
+        ) => RelocationID::new(13171, 13316)
+    }
+
+    /// Core interior/exterior cell-transition engine backing every cell
+    /// attach/detach (interior enter/exit, coc, worldspace load).
+    #[inline(always)]
+    pub fn set_current_cell(
+        &mut self,
+        cell: *mut TESObjectCELL,
+        position: &crate::re::NiPoint3,
+        unk4: f32,
+    ) {
+        self.set_current_cell_impl(cell, position, unk4);
+    }
+
+    crate::relocation_func! {
+        pub fn get_water_height(&self, pos: &NiPoint3, cell: *mut TESObjectCELL) -> f32 => crate::relocation::VersionedRelocationID::new(crate::version::RUNTIME_SSE_1_7_99, 13212, 13358, 523463)
     }
 
     crate::relocation_func! {

@@ -33,7 +33,7 @@ Key source locations:
 - RTTI constants: `libskyrim/src/offsets/offsets_rtti.rs`
 - VTABLE constants: `libskyrim/src/offsets/offsets_vtable.rs`
 - relocation/runtime layer: `libskyrim/src/relocation.rs`, `libskyrim/src/runtime.rs`
-- FFI bridge layer: `libskyrim/src/ffi.rs`, `libskyrim/cpp/src/bridge.cpp`
+- Former bridge layer, now pure Rust: `libskyrim/src/ffi/` (no C++ is linked)
 - helper scripts: `scripts/generate_re_mod.py`, `scripts/generate_offsets.py`
   `scripts/audit_translation.py`, `scripts/bootstrap_translation.py`,
   `scripts/find_runtime_layout_candidates.py`,
@@ -472,7 +472,7 @@ Translate them once and reuse them by category:
 - When CommonLib constructs a smart pointer on the C++ side, such as
   `make_hkref<T>()`, `make_nismart<T>()`, `make_smart<T>()`, or a helper that
   fills a smart-pointer out-param, prefer the ABI-safe out-param bridge pattern:
-  - C++ bridge entrypoint in `libskyrim/cpp/src/bridge.cpp`
+  - pure-Rust helper in `libskyrim/src/ffi/`
   - matching FFI declaration in `libskyrim/src/ffi.rs`
   - Rust-side construction through `ffi::try_construct_out_param(...)`
   - typed helper on `hkRefPtr::try_construct_with(...)`,
@@ -505,7 +505,7 @@ Translate them once and reuse them by category:
 - When source-backed code returns or accepts a non-trivial handle by value,
   prefer one of these patterns:
   - a hidden out-param Rust wrapper that matches the real MSVC ABI
-  - a C++ bridge entrypoint in `libskyrim/cpp/src/bridge.cpp` plus Rust FFI
+  - a pure-Rust helper in `libskyrim/src/ffi/` plus Rust FFI
 - Public Rust helpers may still expose an ergonomic return-by-value API after
   the ABI-safe wrapper reconstructs the result on the Rust side. The restriction
   is on the raw ABI surface, not on the final Rust helper.

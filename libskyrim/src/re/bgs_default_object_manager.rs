@@ -475,7 +475,7 @@ impl DEFAULT_OBJECT {
 
     #[inline(always)]
     pub fn kTotal() -> Self {
-        Self(DEFAULT_OBJECTS::TOTAL.offset() as i32)
+        Self(DEFAULT_OBJECTS::total() as i32)
     }
 
     #[inline(always)]
@@ -886,7 +886,22 @@ pub struct DEFAULT_OBJECTS;
 impl DEFAULT_OBJECTS {
     pub const KEYWORD_ACTIVATOR_FURNITURE_NO_PLAYER: usize = 182;
     pub const ACTION_IDLE: DEFAULT_OBJECT = DEFAULT_OBJECT::kActionIdle;
+    /// Object count before AE 1.7.99 (SE / AE / VR).
     pub const TOTAL: VariantOffset = VariantOffset::new(364, 364, 369);
+    /// Object count on AE 1.7.99+ (7 objects were inserted).
+    pub const TOTAL_AE1799: usize = 372;
+
+    /// Object count of the running game.
+    #[inline(always)]
+    pub fn total() -> usize {
+        if !crate::runtime::is_vr()
+            && crate::runtime::is_at_least(crate::version::RUNTIME_SSE_1_7_99)
+        {
+            Self::TOTAL_AE1799
+        } else {
+            Self::TOTAL.offset()
+        }
+    }
 }
 
 pub const DEFAULT_OBJECT_ACTION_IDLE: DEFAULT_OBJECT = DEFAULT_OBJECTS::ACTION_IDLE;
@@ -960,9 +975,47 @@ impl BGSDefaultObjectManager {
     pub const FORMTYPE: FormType = FormType::DefaultObject;
 
     pub const OBJECTS_OFFSET: VariantOffset = VariantOffset::new(0x20, 0x20, 0x20);
-    pub const OBJECT_INIT_OFFSET: VariantOffset = VariantOffset::new(0xB80, 0xBA8, 0xB80);
+    /// `objectInit` before AE 1.7.99: SE/AE `0xB80`, VR `0xBA8`.
+    /// See [`Self::object_init_offset`] for the runtime value (`0xBC0` on 1.7.99+).
+    pub const OBJECT_INIT_OFFSET: VariantOffset = VariantOffset::new(0xB80, 0xB80, 0xBA8);
+    pub const OBJECT_INIT_OFFSET_AE1799: usize = 0xBC0;
+    // TODO: CommonLib does not state the AE 1.7.99 object size; only the pre-1.7.99
+    // sizes are recorded here.
     pub const FULL_SIZE: VariantOffset = VariantOffset::new(0xCF0, 0xD08, 0xD20);
     pub const TOTAL: VariantOffset = DEFAULT_OBJECTS::TOTAL;
+
+    /// C++ `BGSDefaultObjectManager::Ae1799Object`: objects that only exist on
+    /// AE 1.7.99+ (raw indices into `objects`).
+    pub const AE1799_HELP_MANUAL_NX: usize = 188;
+    pub const AE1799_HELP_MOTION_ATTACK_BLOCK: usize = 264;
+    pub const AE1799_HELP_MOTION_BOW_AIMING: usize = 265;
+    pub const AE1799_HELP_MOTION_MAGIC_AIMING: usize = 266;
+    pub const AE1799_HELP_MOTION_LOCKPICKING: usize = 267;
+    pub const AE1799_HELP_AMIIBO: usize = 268;
+
+    #[inline(always)]
+    fn is_ae1799() -> bool {
+        !crate::runtime::is_vr() && crate::runtime::is_at_least(crate::version::RUNTIME_SSE_1_7_99)
+    }
+
+    /// `objectInit` offset of the running game.
+    #[inline(always)]
+    pub fn object_init_offset() -> usize {
+        if Self::is_ae1799() {
+            Self::OBJECT_INIT_OFFSET_AE1799
+        } else {
+            Self::OBJECT_INIT_OFFSET.offset()
+        }
+    }
+
+    /// C++ `GetAe1799Object`: `None` before AE 1.7.99 or when uninitialized.
+    #[inline(always)]
+    pub fn get_ae1799_object(&mut self, raw_index: usize) -> *mut *mut TESForm {
+        if !Self::is_ae1799() || !self.is_object_initialized_index(raw_index) {
+            return core::ptr::null_mut();
+        }
+        unsafe { self.objects_ptr().add(raw_index) }
+    }
 
     // override (TESForm)
     // bool Load(TESFile* a_mod) override;  // 06
@@ -974,12 +1027,24 @@ impl BGSDefaultObjectManager {
 
     #[inline(always)]
     pub fn get_object(&self, object: DEFAULT_OBJECT) -> *mut TESForm {
-        self.get_object_by_index(object.value() as usize)
+        // C++ routes DEFAULT_OBJECT through the DefaultObjectID mapping so the
+        // AE 1.7.99 index shift is applied.
+        let idx = Self::map_index(DefaultObjectID(object.value() as u32));
+        if idx == usize::MAX {
+            core::ptr::null_mut()
+        } else {
+            self.get_object_by_index(idx)
+        }
     }
 
     #[inline(always)]
     pub fn get_object_as<T: FormCastable>(&self, object: DEFAULT_OBJECT) -> *mut T {
-        self.get_object_by_index_as::<T>(object.value() as usize)
+        let obj = self.get_object(object);
+        if obj.is_null() || unsafe { !(*obj).is(T::TARGET_FORM_TYPE) } {
+            core::ptr::null_mut()
+        } else {
+            obj.cast()
+        }
     }
 
     #[inline(always)]
@@ -994,7 +1059,6 @@ impl BGSDefaultObjectManager {
 
     #[inline(always)]
     pub fn get_object_by_index(&self, idx: usize) -> *mut TESForm {
-        assert!(idx < Self::TOTAL.offset());
         if !self.is_object_initialized_index(idx) {
             return core::ptr::null_mut();
         }
@@ -1041,10 +1105,7 @@ impl BGSDefaultObjectManager {
     #[inline(always)]
     pub fn get_object_ptr(&mut self, object: DefaultObjectID) -> *mut *mut TESForm {
         let idx = Self::map_index(object);
-        if idx == usize::MAX
-            || idx >= Self::TOTAL.offset()
-            || !self.is_object_initialized_index(idx)
-        {
+        if idx == usize::MAX || !self.is_object_initialized_index(idx) {
             core::ptr::null_mut()
         } else {
             unsafe { self.objects_ptr().add(idx) }
@@ -1063,7 +1124,7 @@ impl BGSDefaultObjectManager {
 
     #[inline(always)]
     pub fn is_object_initialized(&self, object: DEFAULT_OBJECT) -> bool {
-        self.is_object_initialized_index(object.value() as usize)
+        self.is_object_initialized_id(DefaultObjectID(object.value() as u32))
     }
 
     #[inline(always)]
@@ -1074,7 +1135,9 @@ impl BGSDefaultObjectManager {
 
     #[inline(always)]
     pub fn is_object_initialized_index(&self, idx: usize) -> bool {
-        assert!(idx < Self::TOTAL.offset());
+        if idx >= DEFAULT_OBJECTS::total() {
+            return false;
+        }
         unsafe { *self.object_init_ptr().add(idx) }
     }
 
@@ -1109,7 +1172,16 @@ impl BGSDefaultObjectManager {
         let result = if crate::runtime::is_vr() {
             (idx & 0xFFFF_0000) >> 16
         } else {
-            idx & 0x0000_FFFF
+            let mut result = idx & 0x0000_FFFF;
+            // AE 1.7.99 inserted one object at 188 and six at 263.
+            if crate::runtime::is_at_least(crate::version::RUNTIME_SSE_1_7_99) {
+                if result >= 263 {
+                    result += 6;
+                } else if result >= 188 {
+                    result += 1;
+                }
+            }
+            result
         };
 
         if result == 0 { usize::MAX } else { result }
@@ -1128,7 +1200,7 @@ impl BGSDefaultObjectManager {
     fn object_init_ptr(&self) -> *mut bool {
         unsafe {
             (self as *const Self as *mut u8)
-                .add(Self::OBJECT_INIT_OFFSET.offset())
+                .add(Self::object_init_offset())
                 .cast::<bool>()
         }
     }

@@ -44,8 +44,8 @@ pub struct hkpMotion {
     pub deactivation_ref_orientation: [u32; 2],        // 120
     pub saved_motion: *mut hkpMaxSizeMotion,           // 128
     pub saved_quality_type_index: u16,                 // 130
-    pub pad132: u16,                                   // 132
-    pub gravity_factor: hkHalf,                        // 134
+    pub gravity_factor: hkHalf,                        // 132
+    pub pad134: u32,                                   // 134
     pub pad138: u64,                                   // 138
 }
 
@@ -59,7 +59,7 @@ const _: () = assert!(core::mem::offset_of!(hkpMotion, angular_velocity) == 0xF0
 const _: () = assert!(core::mem::offset_of!(hkpMotion, deactivation_ref_position) == 0x100);
 const _: () = assert!(core::mem::offset_of!(hkpMotion, deactivation_ref_orientation) == 0x120);
 const _: () = assert!(core::mem::offset_of!(hkpMotion, saved_motion) == 0x128);
-const _: () = assert!(core::mem::offset_of!(hkpMotion, gravity_factor) == 0x134);
+const _: () = assert!(core::mem::offset_of!(hkpMotion, gravity_factor) == 0x132);
 
 impl RttiType for hkpMotion {
     const RTTI: VariantID = RTTI_hkpMotion;

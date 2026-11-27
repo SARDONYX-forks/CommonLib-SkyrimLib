@@ -64,9 +64,9 @@ pub struct HitData {
     pub stagger: f32,                          // 68
     pub sneak_attack_bonus: f32,               // 6C
     pub bonus_health_damage_mult: f32,         // 70
-    pub push_back: f32,                        // 74
-    pub reflected_damage: f32,                 // 78
-    pub critical_damage_mult: f32,             // 7C
+    pub unk74: f32,                            // 74
+    pub push_back: f32,                        // 78
+    pub reflected_damage: f32,                 // 7C
     pub flags: HitFlag,                        // 80
     pub equip_index: u32,                      // 84
     pub skill: ActorValue,                     // 88

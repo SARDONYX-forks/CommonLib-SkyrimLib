@@ -2,10 +2,12 @@
 name = "libskyrim"
 version = "1.1.0"
 edition = "2024"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 core-util = { path = "../core-util" }
 cstd = { path = "../cstd" }
+rex_com = { path = "../rex_com" }
 libskyrim-macros = { path = "../libskyrim-macros" }
 bitflags = "2.11.0"
 bytemuck = { version = "1.25.0", features = ["derive"] }
@@ -20,7 +22,7 @@ libm = "0.2.16"
 
 [features]
 # Build the default cross-runtime plugin surface for SE and AE.
-default = ["se", "ae", "prebuilt"]
+default = ["se", "ae"]
 
 # Opt-in std-backed runtime guards for plugin crates that want panic capture,
 # panic-hook diagnostics, and SEH rethrow for crash loggers.
@@ -38,8 +40,6 @@ vr = []
 # Opt-in default panic handler for final no_std plugin crates.
 panic-handler = []
 
-# Get the pre-built header files and libs from the URL. (zip: 160MB, Extracted: 700MB, Timeout: 30mins)
-prebuilt = ["dep:reqwest", "dep:zip"]
 
 [dependencies.windows-sys]
 version = "0.61.2"
@@ -47,9 +47,12 @@ features = [
     "Win32_Foundation",
     "Win32_System_LibraryLoader",
     "Win32_System_Diagnostics_Debug",
-    "Win32_System_Memory",
-    "Win32_System_ProcessStatus",
     "Win32_System_Kernel",
+    "Win32_System_Memory",
+    "Win32_System_SystemServices",
+    "Win32_Storage_FileSystem",
+    "Win32_Security",
+    "Win32_System_ProcessStatus",
     "Win32_System_Threading",
     "Win32_System_Com",
     "Win32_UI_Shell",
@@ -59,8 +62,3 @@ features = [
     "Win32_System_SystemInformation",
     "Win32_System_Time",
 ]
-
-[build-dependencies]
-reqwest = { version = "0.13.4", features = ["blocking"], optional = true }
-xmake = { version = "0.3.3" }
-zip = { version = "8.6.0", optional = true }

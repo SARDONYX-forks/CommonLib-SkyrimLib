@@ -77,9 +77,9 @@ impl BSTScatterTableStandardParent {
 #[repr(C)]
 pub struct BSTScatterTableFixedParent {
     _pad00: u32,        // 0x00
-    pub _free: u32,     // 0x04
-    pub _good: u32,     // 0x08
-    pub _capacity: u32, // 0x0C
+    pub _capacity: u32, // 0x04 - total # of slots, always a power of 2
+    pub _free: u32,     // 0x08 - # of free slots
+    pub _good: u32,     // 0x0C - last free index
 }
 
 const _: () = assert!(core::mem::size_of::<BSTScatterTableFixedParent>() == 0x10);

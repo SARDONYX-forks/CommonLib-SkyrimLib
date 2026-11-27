@@ -102,7 +102,7 @@ impl BSGeometry {
     pub const RTTI: VariantID = RTTI_BSGeometry;
     pub const NI_RTTI: VariantID = NiRTTI_BSGeometry;
     pub const VTABLE: &'static [VariantID] = &VTABLE_BSGeometry;
-    pub const FULL_SIZE: VariantOffset = VariantOffset::new(0x158, 0x158, 0x1A0);
+    pub const FULL_SIZE: VariantOffset = VariantOffset::new(0x158, 0x158, 0x198);
     pub const MODEL_DATA_OFFSET: VariantOffset = VariantOffset::new(0x110, 0x110, 0x138);
     pub const GEOMETRY_RUNTIME_DATA_OFFSET: VariantOffset = VariantOffset::new(0x120, 0x120, 0x160);
     pub const TYPE_OFFSET: VariantOffset = VariantOffset::new(0x150, 0x150, 0x190);
@@ -127,15 +127,9 @@ impl BSGeometry {
 
     #[inline(always)]
     pub fn type_bits(&self) -> u32 {
-        if crate::runtime::is_vr() {
-            unsafe {
-                *((self as *const _ as *const u8).add(Self::TYPE_OFFSET.offset()) as *const u32)
-            }
-        } else {
-            unsafe {
-                *((self as *const _ as *const u8).add(Self::TYPE_OFFSET.offset()) as *const u8)
-                    as u32
-            }
+        // `BSGeometryTypeSet` is `REX::EnumSet<Type, std::uint8_t>` on every runtime.
+        unsafe {
+            *((self as *const _ as *const u8).add(Self::TYPE_OFFSET.offset()) as *const u8) as u32
         }
     }
 
