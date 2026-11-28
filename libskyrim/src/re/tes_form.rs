@@ -882,8 +882,10 @@ impl TESForm {
     }
 
     // RELOCATION_ID SE: 514360, AE: 400517
+    // The address is the lock object itself (C++ `REL::Relocation<BSReadWriteLock*>` + `.get()`),
+    // not a pointer to it.
     crate::relocation_variable! {
-        pub fn get_all_forms_map_lock() -> &'static *mut BSReadWriteLock => RelocationID::new(514360, 400517)
+        pub fn get_all_forms_map_lock() -> &'static BSReadWriteLock => RelocationID::new(514360, 400517)
     }
 
     // RELOCATION_ID SE: 514352, AE: 400509
@@ -892,8 +894,9 @@ impl TESForm {
     }
 
     // RELOCATION_ID SE: 514361, AE: 400518
+    // The lock object itself, like `get_all_forms_map_lock`.
     crate::relocation_variable! {
-        pub fn get_all_forms_editor_id_map_lock() -> &'static *mut BSReadWriteLock => RelocationID::new(514361, 400518)
+        pub fn get_all_forms_editor_id_map_lock() -> &'static BSReadWriteLock => RelocationID::new(514361, 400518)
     }
 
     #[inline]
@@ -911,7 +914,10 @@ impl TESForm {
         *mut crate::re::bst_hash_map::BSTHashMap<FormID, *mut TESForm>,
         *mut BSReadWriteLock,
     ) {
-        (*Self::get_all_forms_map(), *Self::get_all_forms_map_lock())
+        (
+            *Self::get_all_forms_map(),
+            core::ptr::from_ref(Self::get_all_forms_map_lock()).cast_mut(),
+        )
     }
 
     #[inline(always)]
@@ -921,7 +927,7 @@ impl TESForm {
     ) {
         (
             *Self::get_all_forms_by_editor_id_map(),
-            *Self::get_all_forms_editor_id_map_lock(),
+            core::ptr::from_ref(Self::get_all_forms_editor_id_map_lock()).cast_mut(),
         )
     }
 
